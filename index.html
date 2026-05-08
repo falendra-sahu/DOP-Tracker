@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1e3a5f">
+<title>DOP Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+<style>
+:root {
+  --navy:#1e3a5f; --blue:#2563eb; --sky:#e8f0fe;
+  --green:#10b981; --accent:#f59e0b; --red:#ef4444;
+  --surface:#fff; --bg:#f0f4f8; --border:#e2e8f0;
+  --text:#1e293b; --muted:#64748b;
+  --shadow:0 4px 24px rgba(30,58,95,.10);
+  --shadow-lg:0 12px 40px rgba(30,58,95,.18);
+  --r:14px; --rs:8px;
+  --font:'DM Sans',sans-serif; --fh:'Space Grotesk',sans-serif;
+  --nb:0px;
+}
+@media(max-width:768px){:root{--nb:76px}}
+*,*::before,*::after{
+  box-sizing:border-box;margin:0;padding:0;
+  -webkit-tap-highlight-color: transparent;
+}
+html{scroll-behavior:smooth;}
+html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text)}
+
+.app{display:flex;flex-direction:column;height:100%;max-width:1200px;margin:0 auto}
+@media(min-width:769px){.app{padding:24px;gap:20px}}
+
+/* HEADER */
+.header{background:var(--navy);padding:18px 20px 14px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;transition:all .3s}
+@media(min-width:769px){.header{border-radius:var(--r);padding:20px 28px}}
+.hbrand{display:flex;align-items:center;gap:12px}
+.hicon{width:40px;height:40px;background:var(--blue);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.hicon i{color:#fff;font-size:16px}
+.htitle{font-family:var(--fh);font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.hsub{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
+.dtabs{display:none;background:rgba(255,255,255,.08);border-radius:10px;padding:4px;gap:2px}
+@media(min-width:769px){.dtabs{display:flex}}
+.dtab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;gap:7px;transition:all .2s;border:none;background:none;font-family:var(--font)}
+.dtab.active{background:var(--blue);color:#fff}
+.dtab:not(.active):hover{background:rgba(255,255,255,.1);color:rgba(255,255,255,.85)}
+
+/* CONTENT */
+.content{flex:1;overflow-y:auto;overflow-x:hidden;padding:20px 16px;padding-bottom:calc(20px + var(--nb));scroll-behavior:smooth;}
+@media(min-width:769px){.content{background:var(--surface);border-radius:var(--r);padding:28px 32px;box-shadow:var(--shadow)}}
+
+/* PAGES */
+.page{display:none; animation:fadeIn 0.3s ease;}
+.page.active{display:block}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+/* HOME */
+.hgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:22px}
+.scard{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:20px 18px;cursor:pointer;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ca,var(--blue))}
+.scard:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.scard:active{transform:scale(0.98)}
+.scard[data-tab=payments]{--ca:var(--blue)}
+.scard[data-tab=formality]{--ca:var(--green)}
+.scard[data-tab=default]{--ca:var(--accent)}
+.sc-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
+.sc-val{font-family:var(--fh);font-size:40px;font-weight:700;color:var(--text);line-height:1}
+.sc-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:38px;opacity:.06}
+.home-rec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+@media(min-width:769px){.home-rec{border-top:1px solid var(--border);border-radius:0 0 var(--r) var(--r)}}
+.rec-head{padding:14px 20px;border-bottom:1px solid var(--border)}
+.rec-title{font-family:var(--fh);font-size:14px;font-weight:700}
+.rec-list{padding:6px 0}
+.rec-item{padding:11px 20px;display:flex;align-items:center;gap:12px;border-bottom:1px solid #f8fafc;transition:background .2s;}
+.rec-item:hover{background:#fafbff;}
+.rec-item:last-child{border-bottom:none}
+.rec-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.rec-name{font-size:14px;font-weight:600}
+.rec-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.rec-badge{margin-left:auto;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;white-space:nowrap}
+.bb{background:var(--sky);color:var(--blue)}
+.bg{background:#d1fae5;color:var(--green)}
+.ba{background:#fef3c7;color:#d97706}
+.empty-home{text-align:center;padding:40px 20px;color:var(--muted);font-size:14px}
+
+/* TOOLBAR & SUMMARY */
+.page-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;}
+.tsummary{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin-bottom:16px;}
+.ts-box{background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:12px 14px;position:relative;overflow:hidden;}
+.ts-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--ts-accent,var(--blue));}
+.ts-box.ts-collect{--ts-accent:var(--blue)}
+.ts-box.ts-cash{--ts-accent:var(--green)}
+.ts-box.ts-online{--ts-accent:#8b5cf6}
+.ts-box.ts-out{--ts-accent:var(--red)}
+.ts-box.ts-pending{--ts-accent:var(--accent)}
+.ts-box.ts-done{--ts-accent:var(--green)}
+.ts-box.ts-prog{--ts-accent:var(--accent)}
+.ts-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:6px;}
+.ts-row{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.ts-count{font-size:22px;font-weight:700;font-family:var(--fh);color:var(--text);line-height:1;}
+.ts-sep{font-size:12px;color:var(--muted);font-weight:600;}
+.ts-amt{font-size:13px;font-weight:700;color:var(--muted);font-family:var(--fh);}
+.toolbar{display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap}
+.sw{flex:1;min-width:150px;position:relative}
+.sw i{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:13px}
+.sinput{width:100%;padding:10px 12px 10px 34px;border:1px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:var(--font);background:var(--surface);color:var(--text);transition:border-color .15s}
+.sinput:focus{outline:none;border-color:var(--blue)}
+.sinput-select { background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2212%22%20height%3D%2212%22%20viewBox%3D%220%200%2024%2024%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M7%2010l5%205%205-5z%22%20fill%3D%22%2364748b%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; appearance:none; }
+.btn{padding:10px 16px;border-radius:var(--rs);border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:var(--font);display:flex;align-items:center;gap:6px;transition:transform 0.1s, background 0.18s;white-space:nowrap}
+.btn:active{transform:scale(0.96)}
+.btn-p{background:var(--blue);color:#fff}
+.btn-p:hover{background:#1d4ed8}
+.btn-d{background:#fee2e2;color:var(--red);border:1px solid #fecaca}
+.btn-d:hover{background:#fecaca}
+.btn-g{background:transparent;color:var(--muted);border:1px solid var(--border)}
+.btn-g:hover{background:var(--bg)}
+.hidden{display:none!important}
+.sec-title{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
+.sec-sub{font-size:13px;color:var(--muted);margin-bottom:0}
+
+/* TABLE */
+.tbox{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.twrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead{background:#f8fafc}
+th{padding:12px 14px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;cursor:pointer;user-select:none;}
+th:hover { background-color: #f1f5f9; }
+th i.sort-icon { margin-left: 4px; font-size: 10px; color: #94a3b8; opacity:0.4; }
+th.active-sort i.sort-icon { color: var(--blue); opacity:1; }
+td{padding:13px 14px;border-bottom:1px solid #f1f5f9;color:var(--text);vertical-align:middle;transition:background 0.15s;}
+tr:last-child td{border-bottom:none}
+tbody tr:hover td{background:#fafbff;cursor:pointer}
+.cbc{width:36px;cursor:default;}
+.cbc:hover{background:none;}
+.rcb{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
+.sb{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.s-cash{background:#d1fae5;color:#065f46}
+.s-online{background:#dbeafe;color:#1e40af}
+.s-out{background:#fee2e2;color:#991b1b}
+.s-prog{background:#fef3c7;color:#92400e}
+.s-done{background:#d1fae5;color:#065f46}
+.s-other{background:#f1f5f9;color:#475569}
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty i{font-size:38px;opacity:.2;margin-bottom:10px;display:block}
+.empty p{font-size:15px}
+
+/* MOBILE NAV */
+.mnav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 0 env(safe-area-inset-bottom,8px);box-shadow:0 -4px 20px rgba(0,0,0,.08);z-index:100}
+@media(max-width:768px){.mnav{display:flex}}
+.mni{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:6px 4px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:var(--font);transition:color .2s}
+.mni i{font-size:20px;transition:transform .2s}
+.mni span{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.mni.active{color:var(--blue)}
+.mni.active i{transform:translateY(-2px)}
+
+/* MODALS */
+.mbk{position:fixed;inset:0;background:rgba(15,23,42,.5);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+#cbk{z-index:300;}
+.mbk.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--r);width:100%;max-width:560px;box-shadow:var(--shadow-lg);overflow:hidden;animation:su .25s ease}
+@keyframes su{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.mhd{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:#fafbff}
+.mtitle{font-family:var(--fh);font-size:16px;font-weight:700}
+.mclose{background:none;border:none;cursor:pointer;color:var(--muted);font-size:22px;padding:2px 8px;border-radius:6px;line-height:1;transition:background 0.2s;}
+.mclose:hover{background:var(--bg)}
+.mbody{padding:20px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:480px){.fgrid{grid-template-columns:1fr}}
+.fg label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:5px}
+.finput{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:var(--rs);font-size:14px;font-family:var(--font);color:var(--text);background:var(--surface);transition:border-color .15s;appearance:none}
+.finput:focus{outline:none;border-color:var(--blue)}
+.entry-dates{grid-column:1/-1; font-size:11px; color:var(--muted); text-align:center; margin-top:12px; padding:10px; background:#f8fafc; border-radius:var(--rs); border:1px dashed var(--border);}
+.mft{padding:14px 20px;border-top:1px solid var(--border);background:#fafbff;display:flex;gap:10px}
+.mft .btn{flex:1;justify-content:center}
+.cmodal{background:var(--surface);border-radius:var(--r);width:100%;max-width:360px;box-shadow:var(--shadow-lg);padding:28px 24px;text-align:center;animation:su .25s ease}
+.cicon{font-size:44px;color:var(--red);margin-bottom:14px}
+.ctitle{font-family:var(--fh);font-size:18px;font-weight:700;margin-bottom:8px}
+.cdesc{font-size:13px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.cact{display:flex;gap:10px}
+.cact .btn{flex:1;justify-content:center}
+
+/* REMINDER DRAG-DROP */
+.rem-list{display:flex;flex-direction:column;gap:8px;}
+.rem-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:grab;transition:box-shadow .2s,transform .2s,opacity .2s;user-select:none;}
+.rem-card:active{cursor:grabbing;}
+.rem-card.dragging{opacity:.4;transform:scale(.98);}
+.rem-card.drag-over{box-shadow:0 0 0 2px var(--blue);border-color:var(--blue);}
+.rh{width:18px;flex-shrink:0;color:var(--muted);font-size:15px;cursor:grab;}
+.rh:active{cursor:grabbing;}
+.rinfo{flex:1;min-width:0;}
+.rname{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.raddr{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rdeno{font-size:12px;color:var(--muted);}
+.racts{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.ricn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:6px;transition:background .15s,color .15s;}
+.ricn:hover{background:var(--bg);color:var(--text);}
+.rem-empty{text-align:center;padding:60px 20px;color:var(--muted);}
+.rem-empty i{font-size:38px;opacity:.2;margin-bottom:10px;display:block;}
+.rem-empty p{font-size:15px;}
+/* TOAST */
+.toast{position:fixed;bottom:calc(var(--nb) + 20px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:12px 22px;border-radius:var(--rs);font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);z-index:999;opacity:0;pointer-events:none;transition:all .3s;display:flex;align-items:center;gap:8px;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.err{background:var(--red)}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i id="t-icon"></i><span id="t-msg"></span></div>
+
+<div class="mbk" id="cbk">
+  <div class="cmodal">
+    <div class="cicon"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="ctitle" id="c-title">Delete?</div>
+    <div class="cdesc"  id="c-desc">This cannot be undone.</div>
+    <div class="cact">
+      <button class="btn btn-g" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-d" id="c-ok"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbk" id="ebk">
+  <div class="modal">
+    <div class="mhd">
+      <span class="mtitle" id="m-title">Add Entry</span>
+      <button class="mclose" onclick="closeModal()">&times;</button>
+    </div>
+    <form id="eform" onsubmit="saveEntry(event)">
+      <div class="mbody">
+        <div class="fgrid" id="ffields"></div>
+        <div id="m-dates"></div>
+        <input type="hidden" id="eidx" value="-1">
+      </div>
+      <div class="mft">
+        <button type="button" id="m-del" class="btn btn-d hidden" onclick="triggerDelete()"><i class="fas fa-trash"></i></button>
+        <button type="button" class="btn btn-g" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-p" id="m-save"><i class="fas fa-save"></i> Save</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="app">
+  <header class="header">
+    <div class="hbrand">
+      <div class="hicon"><i class="fas fa-chart-bar"></i></div>
+      <div><div class="htitle">DOP Tracker</div><div class="hsub">Agent Portal Utility</div></div>
+    </div>
+    <nav class="dtabs">
+      <button class="dtab active" data-tab="home"      onclick="switchTab('home')"><i class="fas fa-house"></i> Home</button>
+      <button class="dtab"        data-tab="payments"  onclick="switchTab('payments')"><i class="fas fa-credit-card"></i> Payments</button>
+      <button class="dtab"        data-tab="formality" onclick="switchTab('formality')"><i class="fas fa-folder"></i> Collections</button>
+      <button class="dtab"        data-tab="default"   onclick="switchTab('default')"><i class="fas fa-calendar-days"></i> Default</button>
+      <button class="dtab"        data-tab="reminder"  onclick="switchTab('reminder')"><i class="fas fa-bell"></i> Reminder</button>
+    </nav>
+  </header>
+
+  <main class="content">
+
+    <div id="page-home" class="page active">
+      <div class="hgrid">
+        <div class="scard" data-tab="payments" onclick="switchTab('payments')">
+          <div class="sc-label">Payments</div>
+          <div class="sc-val" id="cnt-p">0</div>
+          <i class="fas fa-credit-card sc-icon"></i>
+        </div>
+        <div class="scard" data-tab="formality" onclick="switchTab('formality')">
+          <div class="sc-label">Collections</div>
+          <div class="sc-val" id="cnt-f">0</div>
+          <i class="fas fa-folder-open sc-icon"></i>
+        </div>
+        <div class="scard" data-tab="default" onclick="switchTab('default')">
+          <div class="sc-label">Defaults</div>
+          <div class="sc-val" id="cnt-d">0</div>
+          <i class="fas fa-calendar-days sc-icon"></i>
+        </div>
+        <div class="scard" data-tab="reminder" onclick="switchTab('reminder')" style="--ca:#8b5cf6">
+          <div class="sc-label">Reminders</div>
+          <div class="sc-val" id="cnt-r">0</div>
+          <i class="fas fa-bell sc-icon"></i>
+        </div>
+      </div>
+      <div class="home-rec">
+        <div class="rec-head"><span class="rec-title">Recent Activity</span></div>
+        <div id="rec-list" class="rec-list"></div>
+      </div>
+    </div>
+
+    <div id="page-payments" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="sec-title">Payments</div>
+          <div class="sec-sub">Track all RD payment records</div>
+        </div>
+      </div>
+      <div class="tsummary" id="sum-payments"></div>
+      <div class="toolbar">
+        <div class="sw"><i class="fas fa-magnifying-glass"></i>
+          <input class="sinput" id="s-payments" type="text" placeholder="Search payments…" oninput="filterTable('payments')">
+        </div>
+        <button class="btn btn-d hidden" id="bulk-payments" onclick="confirmBulk('payments')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-p" onclick="openModal('payments')"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="tbox"><div class="twrap">
+        <table><thead id="th-payments"></thead><tbody id="tb-payments"></tbody></table>
+      </div></div>
+    </div>
+
+    <div id="page-formality" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="sec-title">Collections</div>
+          <div class="sec-sub">Manage document formality &amp; collection status</div>
+        </div>
+      </div>
+      <div class="tsummary" id="sum-formality"></div>
+      <div class="toolbar">
+        <div class="sw"><i class="fas fa-magnifying-glass"></i>
+          <input class="sinput" id="s-formality" type="text" placeholder="Search collections…" oninput="filterTable('formality')">
+        </div>
+        <button class="btn btn-d hidden" id="bulk-formality" onclick="confirmBulk('formality')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-p" onclick="openModal('formality')"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="tbox"><div class="twrap">
+        <table><thead id="th-formality"></thead><tbody id="tb-formality"></tbody></table>
+      </div></div>
+    </div>
+
+    <div id="page-default" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="sec-title">Daily Default A/C</div>
+          <div class="sec-sub">Monitor defaulted accounts &amp; day counts</div>
+        </div>
+      </div>
+      <div class="tsummary" id="sum-default"></div>
+      <div class="toolbar">
+        <div class="sw"><i class="fas fa-magnifying-glass"></i>
+          <input class="sinput" id="s-default" type="text" placeholder="Search defaults…" oninput="filterTable('default')">
+        </div>
+        <button class="btn btn-d hidden" id="bulk-default" onclick="confirmBulk('default')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-p" onclick="openModal('default')"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="tbox"><div class="twrap">
+        <table><thead id="th-default"></thead><tbody id="tb-default"></tbody></table>
+      </div></div>
+    </div>
+
+    <div id="page-reminder" class="page">
+      <div class="page-hdr">
+        <div>
+          <div class="sec-title">Reminder</div>
+          <div class="sec-sub">Drag to reorder reminder records</div>
+        </div>
+      </div>
+      <div class="toolbar">
+        <button class="btn btn-p" onclick="openReminderModal()"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div id="rem-list" class="rem-list"></div>
+    </div>
+
+  </main>
+</div>
+
+<nav class="mnav">
+  <button class="mni active" data-tab="home"      onclick="switchTab('home')"><i class="fas fa-house"></i><span>Home</span></button>
+  <button class="mni"        data-tab="payments"  onclick="switchTab('payments')"><i class="fas fa-credit-card"></i><span>Payments</span></button>
+  <button class="mni"        data-tab="formality" onclick="switchTab('formality')"><i class="fas fa-folder"></i><span>Collections</span></button>
+  <button class="mni"        data-tab="default"   onclick="switchTab('default')"><i class="fas fa-calendar-days"></i><span>Default</span></button>
+  <button class="mni"        data-tab="reminder"  onclick="switchTab('reminder')"><i class="fas fa-bell"></i><span>Reminder</span></button>
+</nav>
+
+<datalist id="cso">
+  <option value="In-Progress"><option value="Collected">
+  <option value="1 Photo Remain"><option value="2 Photo Remain"><option value="3 Photo Remain">
+  <option value="Signature Remain"><option value="Re-Signature"><option value="Denomination Remain">
+  <option value="Aadhaar Remain"><option value="PAN Remain"><option value="Nominee Remain">
+  <option value="Mobile No. Remain">
+</datalist>
+
+<script>
+// ── helpers ──────────────────────────────────────────────────────────────────
+function normaliseSection(val) {
+  // Firebase stores JS arrays as objects {"0":{…},"1":{…}} when they have gaps.
+  // Accept both real arrays and such objects, filter out nulls.
+  if (!val) return [];
+  if (Array.isArray(val)) return val.filter(Boolean);
+  return Object.values(val).filter(Boolean);
+}
+
+window.loadDB = function () {
+  try {
+    const raw = JSON.parse(localStorage.getItem('dop_db'));
+    return {
+      payments : normaliseSection(raw && raw.payments),
+      formality: normaliseSection(raw && raw.formality),
+      'default': normaliseSection(raw && raw['default']),
+      reminder : normaliseSection(raw && raw.reminder)
+    };
+  } catch (e) {
+    return { payments: [], formality: [], 'default': [], reminder: [] };
+  }
+};
+
+function loadDB() { return window.loadDB(); }
+
+function saveDB(data) {
+  data.payments  = normaliseSection(data.payments);
+  data.formality = normaliseSection(data.formality);
+  data['default']= normaliseSection(data['default']);
+  data.reminder  = normaliseSection(data.reminder);
+  localStorage.setItem('dop_db', JSON.stringify(data));
+  if (typeof window.pushToFirebase === 'function') window.pushToFirebase(data);
+}
+
+// Called by Firebase listener after remote update
+window.refreshUI = function () {
+  if (currentTab === 'home') {
+    renderHome();
+  } else if (currentTab === 'reminder') {
+    renderReminder();
+  } else {
+    renderTable(currentTab);
+  }
+};
+
+// ── config ───────────────────────────────────────────────────────────────────
+const CFG = {
+  payments: {
+    cols:  ['Name','Amount','Month','Status'],
+    keys:  ['name','amount','month','status'],
+    fields:[
+      {name:'name',  label:'Name',               type:'text'},
+      {name:'amount',label:'Amount (₹)',          type:'text', format:true},
+      {name:'month', label:'Month (e.g. Jan 25)', type:'text'},
+      {name:'status',label:'Status', type:'select', options:['Cash','Online','Out']}
+    ]
+  },
+  formality: {
+    cols:  ['Name','Address','Deno','Status'],
+    keys:  ['name','address','deno','status'],
+    fields:[
+      {name:'name',   label:'Name',         type:'text'},
+      {name:'address',label:'Address',      type:'text'},
+      {name:'deno',   label:'Denomination', type:'text', format:true},
+      {name:'status', label:'Status',       type:'datalist', list:'cso'}
+    ]
+  },
+  'default': {
+    cols:  ['Name','Month','Days','Deno','Address'],
+    keys:  ['name','month','days','deno','address'],
+    fields:[
+      {name:'name',   label:'Name',           type:'text'},
+      {name:'month',  label:'Month',          type:'month'},
+      {name:'days',   label:'Days Collected', type:'number'},
+      {name:'deno',   label:'Denomination',   type:'text', format:true},
+      {name:'address',label:'Address',        type:'text'}
+    ]
+  }
+};
+
+// ── sort state ───────────────────────────────────────────────────────────────
+let currentSort = { tab: '', key: '', dir: 'asc' };
+
+function handleSort(tab, key) {
+  if (currentSort.tab === tab && currentSort.key === key) {
+    currentSort.dir = currentSort.dir === 'asc' ? 'desc' : 'asc';
+    // third click → reset
+    if (currentSort._clicks) { currentSort = { tab:'', key:'', dir:'asc', _clicks:0 }; return; }
+    currentSort._clicks = 1;
+  } else {
+    currentSort = { tab, key, dir: 'asc', _clicks: 0 };
+  }
+  renderTable(tab);
+}
+
+function getSortIcon(tab, key) {
+  if (currentSort.tab !== tab || currentSort.key !== key)
+    return '<i class="fas fa-sort sort-icon"></i>';
+  return currentSort.dir === 'asc'
+    ? '<i class="fas fa-sort-up sort-icon"></i>'
+    : '<i class="fas fa-sort-down sort-icon"></i>';
+}
+
+// ── formatting ───────────────────────────────────────────────────────────────
+function formatNum(e) {
+  let val = e.target.value.replace(/[^0-9]/g, '');
+  e.target.value = val ? Number(val).toLocaleString('en-IN') : '';
+}
+
+function fmt(key, val) {
+  if (val === '' || val == null) return '—';
+  if (['amount','deno','days'].includes(key) && !isNaN(val))
+    return Number(val).toLocaleString('en-IN');
+  if (key === 'month' && val && val.includes('-')) {
+    const [y,m] = val.split('-');
+    return new Date(y, m-1).toLocaleString('default',{month:'short',year:'numeric'});
+  }
+  return val || '—';
+}
+
+function badge(tab, val) {
+  if (tab === 'payments') {
+    if (val === 'Cash')   return `<span class="sb s-cash">Cash</span>`;
+    if (val === 'Online') return `<span class="sb s-online">Online</span>`;
+    if (val === 'Out')    return `<span class="sb s-out">Out</span>`;
+    return `<span class="sb s-other">${val||'—'}</span>`;
+  }
+  if (tab === 'formality') {
+    if (val === 'Collected')   return `<span class="sb s-done">Collected</span>`;
+    if (val === 'In-Progress') return `<span class="sb s-prog">In-Progress</span>`;
+    return `<span class="sb s-other">${val||'—'}</span>`;
+  }
+  if (tab === 'reminder') {
+    if (val === '1st') return `<span class="sb s-online">1st</span>`;
+    if (val === '2nd') return `<span class="sb s-prog">2nd</span>`;
+    return `<span class="sb s-other">${val||'—'}</span>`;
+  }
+  return val || '—';
+}
+
+// ── tab switching ─────────────────────────────────────────────────────────────
+let currentTab = 'home';
+
+function switchTab(tab) {
+  currentTab = tab;
+
+  document.querySelectorAll('[data-tab]').forEach(el =>
+    el.classList.toggle('active', el.dataset.tab === tab)
+  );
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + tab).classList.add('active');
+
+  if (tab === 'home') {
+    renderHome();
+  } else if (tab === 'reminder') {
+    renderReminder();
+  } else {
+    const si = document.getElementById('s-' + tab);
+    if (si) si.value = '';
+    currentSort = { tab: '', key: '', dir: 'asc' };
+    renderTable(tab);
+  }
+}
+
+// ── home ──────────────────────────────────────────────────────────────────────
+function renderHome() {
+  const db = loadDB();
+
+  document.getElementById('cnt-p').textContent = db.payments.length;
+  document.getElementById('cnt-f').textContent = db.formality.length;
+  document.getElementById('cnt-d').textContent = db['default'].length;
+  const cntR = document.getElementById('cnt-r');
+  if (cntR) cntR.textContent = (db.reminder||[]).length;
+
+  const all = [
+    ...db.payments.map((r,i) => ({...r, _t:'payments',  _idx:i})),
+    ...db.formality.map((r,i) => ({...r, _t:'formality', _idx:i})),
+    ...db['default'].map((r,i) => ({...r, _t:'default',   _idx:i}))
+  ].sort((a,b) =>
+    new Date(b.updatedAt||b.createdAt||0) - new Date(a.updatedAt||a.createdAt||0)
+  ).slice(0,10);
+
+  const list = document.getElementById('rec-list');
+  if (!all.length) {
+    list.innerHTML = '<div class="empty-home">No records yet. Add your first entry!</div>';
+    return;
+  }
+  list.innerHTML = all.map(r => {
+    const bc  = r._t==='payments' ? 'bb' : r._t==='formality' ? 'bg' : 'ba';
+    const lbl = r._t==='payments' ? 'Payment' : r._t==='formality' ? 'Collection' : 'Default';
+    const dot = r._t==='payments' ? '#2563eb' : r._t==='formality' ? '#10b981' : '#f59e0b';
+    const sub = r._t==='payments'
+      ? (r.amount ? '₹'+Number(r.amount).toLocaleString('en-IN') : r.month||'')
+      : (r.address||(r.deno ? '₹'+Number(r.deno).toLocaleString('en-IN') : ''));
+    return `<div class="rec-item">
+      <div class="rec-dot" style="background:${dot}"></div>
+      <div><div class="rec-name">${r.name||'—'}</div><div class="rec-sub">${sub}</div></div>
+      <span class="rec-badge ${bc}">${lbl}</span>
+    </div>`;
+  }).join('');
+}
+
+// ── table ─────────────────────────────────────────────────────────────────────
+function renderTable(tab) {
+  // Always read fresh filter value from search input
+  const filter = (document.getElementById('s-' + tab) || {}).value || '';
+
+  const db   = loadDB();
+  const c    = CFG[tab];
+  const head = document.getElementById('th-' + tab);
+  const body = document.getElementById('tb-' + tab);
+
+  if (!head || !body) return; // page not in DOM yet
+
+  head.innerHTML = `<tr>
+    <th class="cbc" onclick="event.stopPropagation()">
+      <input type="checkbox" class="rcb" id="sa-${tab}" onclick="toggleAll('${tab}',this)">
+    </th>
+    ${c.cols.map((col,idx) => {
+      const key      = c.keys[idx];
+      const isActive = currentSort.tab===tab && currentSort.key===key;
+      return `<th onclick="handleSort('${tab}','${key}')" class="${isActive?'active-sort':''}">${col}${getSortIcon(tab,key)}</th>`;
+    }).join('')}
+  </tr>`;
+
+  // Get the right array (handles 'default' key)
+  let rows = (db[tab] || []).map((r,i) => ({...r, _idx:i}));
+
+  // filter
+  if (filter) {
+    const f = filter.toLowerCase();
+    rows = rows.filter(r => Object.values(r).some(v => (v+'').toLowerCase().includes(f)));
+  }
+
+  // sort
+  if (currentSort.tab===tab && currentSort.key) {
+    const key = currentSort.key;
+    const dir = currentSort.dir==='asc' ? 1 : -1;
+    rows.sort((a,b) => {
+      let A = a[key]||'', B = b[key]||'';
+      if (['amount','deno','days'].includes(key)) {
+        A = Number((A+'').replace(/,/g,''))||0;
+        B = Number((B+'').replace(/,/g,''))||0;
+        return (A-B)*dir;
+      }
+      return (A+'').localeCompare(B+'')*dir;
+    });
+  }
+
+  // summary — always based on full (unfiltered) data
+  const sumEl = document.getElementById('sum-' + tab);
+  if (sumEl) {
+    const allRows = (db[tab] || []).map((r,i) => ({...r, _idx:i}));
+    function amt(r){ return Number((r.amount||'').replace(/,/g,''))||0; }
+    function dno(r){ return Number((r.deno||'').replace(/,/g,''))||0; }
+    function sc(n){ return '₹'+Number(n).toLocaleString('en-IN'); }
+    function box(cls,lbl,count,amount){
+      return `<div class="ts-box ${cls}">
+        <div class="ts-lbl">${lbl}</div>
+        <div class="ts-row">
+          <span class="ts-count">${count}</span>
+          <span class="ts-sep">~</span>
+          <span class="ts-amt">${sc(amount)}</span>
+        </div>
+      </div>`;
+    }
+    if (tab==='payments') {
+      const cashRows    = allRows.filter(r=>r.status==='Cash');
+      const onlineRows  = allRows.filter(r=>r.status==='Online');
+      const outRows     = allRows.filter(r=>r.status==='Out');
+      const totalAmt    = allRows.reduce((a,r)=>a+amt(r),0);
+      const cashAmt     = cashRows.reduce((a,r)=>a+amt(r),0);
+      const onlineAmt   = onlineRows.reduce((a,r)=>a+amt(r),0);
+      const outAmt      = outRows.reduce((a,r)=>a+amt(r),0);
+      const combinedOnlineCount = onlineRows.length + outRows.length;
+      const combinedOnlineAmt   = onlineAmt + outAmt;
+      const pendingAmt          = onlineAmt;
+      sumEl.innerHTML =
+        box('ts-collect','Total Collect', allRows.length, totalAmt) +
+        box('ts-cash',   'Total Cash',    cashRows.length, cashAmt) +
+        box('ts-online', 'Total Online',  combinedOnlineCount, combinedOnlineAmt) +
+        box('ts-out',    'Total Out',     outRows.length, outAmt) +
+        box('ts-pending','Pending Online',onlineRows.length, pendingAmt);
+    } else if (tab==='formality') {
+      const doneRows = allRows.filter(r=>r.status==='Collected');
+      const progRows = allRows.filter(r=>r.status==='In-Progress');
+      const totalDno = allRows.reduce((a,r)=>a+dno(r),0);
+      const doneDno  = doneRows.reduce((a,r)=>a+dno(r),0);
+      const progDno  = progRows.reduce((a,r)=>a+dno(r),0);
+      sumEl.innerHTML =
+        box('ts-collect','Total A/C',       allRows.length, totalDno) +
+        box('ts-done',   'Total Collected', doneRows.length, doneDno) +
+        box('ts-prog',   'Total In-Prog',   progRows.length, progDno);
+    } else if (tab==='default') {
+      const maxDays = allRows.length ? Math.max(...allRows.map(r=>Number(r.days)||0)) : 0;
+      sumEl.innerHTML = `
+        <div class="ts-box ts-collect"><div class="ts-lbl">Total A/C</div><div class="ts-row"><span class="ts-count">${allRows.length}</span></div></div>
+        <div class="ts-box ts-out"><div class="ts-lbl">Max Days</div><div class="ts-row"><span class="ts-count">${maxDays}</span></div></div>`;
+    }
+  }
+
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="${c.cols.length+1}">
+      <div class="empty"><i class="fas fa-inbox"></i>
+      <p>${filter?'No matching records.':'No records yet. Click New to add one.'}</p></div>
+    </td></tr>`;
+    syncBulk(tab);
+    return;
+  }
+
+  body.innerHTML = rows.map(row => {
+    const cells = c.keys.map(key => {
+      const val     = row[key]||'';
+      const display = (key==='status') ? badge(tab,val) : fmt(key,val);
+      return `<td onclick="openModal('${tab}',${row._idx})">${display}</td>`;
+    }).join('');
+    return `<tr>
+      <td class="cbc" onclick="event.stopPropagation()">
+        <input type="checkbox" class="rcb ecb-${tab}" data-i="${row._idx}" onclick="syncBulk('${tab}')">
+      </td>${cells}
+    </tr>`;
+  }).join('');
+
+  syncBulk(tab);
+}
+
+function filterTable(tab) { renderTable(tab); }
+
+// ── bulk / checkbox ───────────────────────────────────────────────────────────
+function toggleAll(tab, master) {
+  document.querySelectorAll(`.ecb-${tab}`).forEach(cb => cb.checked = master.checked);
+  syncBulk(tab);
+}
+
+function syncBulk(tab) {
+  const checked = document.querySelectorAll(`.ecb-${tab}:checked`).length;
+  const total   = document.querySelectorAll(`.ecb-${tab}`).length;
+  const btn     = document.getElementById('bulk-'+tab);
+  if (btn) {
+    if (checked>0) { btn.classList.remove('hidden'); btn.innerHTML=`<i class="fas fa-trash"></i> Delete (${checked})`; }
+    else btn.classList.add('hidden');
+  }
+  const sa = document.getElementById('sa-'+tab);
+  if (sa) { sa.checked = total>0 && checked===total; sa.indeterminate = checked>0 && checked<total; }
+}
+
+// ── modal ─────────────────────────────────────────────────────────────────────
+function openModal(tab, editIdx=-1) {
+  const db     = loadDB();
+  const c      = CFG[tab];
+  const isEdit = editIdx > -1;
+  const data   = isEdit ? (db[tab][editIdx]||{}) : {};
+
+  document.getElementById('m-title').textContent = isEdit ? 'Update Entry' : 'Add New Entry';
+  document.getElementById('eidx').value           = editIdx;
+  document.getElementById('m-del').classList.toggle('hidden', !isEdit);
+  document.getElementById('m-save').innerHTML     = isEdit
+    ? '<i class="fas fa-pen"></i> Update'
+    : '<i class="fas fa-save"></i> Save';
+
+  const ff = document.getElementById('ffields');
+  ff.dataset.tab = tab;
+  ff.innerHTML = c.fields.map(f => {
+    const val     = data[f.name]!==undefined ? data[f.name] : '';
+    let dispVal   = val;
+    if (f.format && dispVal && !isNaN(dispVal)) dispVal = Number(dispVal).toLocaleString('en-IN');
+    let inp='';
+    if (f.type==='select') {
+      inp=`<select name="${f.name}" class="finput sinput-select">${f.options.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+    } else if (f.type==='datalist') {
+      inp=`<input type="text" name="${f.name}" value="${dispVal}" list="${f.list}" class="finput" placeholder="Select or type…">`;
+    } else {
+      const ev = f.format ? ` oninput="formatNum(event)" inputmode="numeric"` : '';
+      inp=`<input type="${f.type}" name="${f.name}" value="${dispVal}" class="finput" required${ev}>`;
+    }
+    return `<div class="fg"><label>${f.label}</label>${inp}</div>`;
+  }).join('');
+
+  let datesHtml='';
+  if (isEdit) {
+    const opts={day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'};
+    const cDate = data.createdAt ? new Date(data.createdAt).toLocaleString('en-IN',opts) : '—';
+    const uDate = data.updatedAt ? new Date(data.updatedAt).toLocaleString('en-IN',opts) : '—';
+    datesHtml=`<div class="entry-dates">Added: ${cDate} &nbsp;&bull;&nbsp; Updated: ${uDate}</div>`;
+  }
+  document.getElementById('m-dates').innerHTML = datesHtml;
+  document.getElementById('ebk').classList.add('open');
+}
+
+function closeModal() { document.getElementById('ebk').classList.remove('open'); }
+
+function saveEntry(e) {
+  e.preventDefault();
+  const tab = document.getElementById('ffields').dataset.tab;
+  const idx = parseInt(document.getElementById('eidx').value);
+  const fd  = new FormData(e.target);
+  const db  = loadDB();
+  if (!db[tab]) db[tab] = [];
+  const existing = (idx>-1 && db[tab][idx]) ? db[tab][idx] : {};
+  const now = new Date().toISOString();
+  const obj = { createdAt: existing.createdAt||now, updatedAt: now };
+  fd.forEach((v,k) => {
+    obj[k] = ['amount','deno','days'].includes(k) ? v.trim().replace(/,/g,'') : v.trim();
+  });
+  if (idx>-1) { db[tab][idx]=obj; showToast('Entry updated ✓'); }
+  else        { db[tab].push(obj); showToast('Entry added ✓'); }
+  saveDB(db);
+  closeModal();
+  if (tab==='reminder')      renderReminder();
+  else if (currentTab===tab) renderTable(tab);
+  if (currentTab==='home')   renderHome();
+}
+
+// ── confirm / delete ──────────────────────────────────────────────────────────
+function showConfirm(title,desc,onOk) {
+  document.getElementById('c-title').textContent = title;
+  document.getElementById('c-desc').textContent  = desc;
+  document.getElementById('c-ok').onclick = ()=>{ onOk(); closeConfirm(); };
+  document.getElementById('cbk').classList.add('open');
+}
+function closeConfirm() { document.getElementById('cbk').classList.remove('open'); }
+
+function triggerDelete() {
+  const tab = document.getElementById('ffields').dataset.tab;
+  const idx = parseInt(document.getElementById('eidx').value);
+  closeModal();
+  showConfirm('Delete Record?','This cannot be undone.',()=>{
+    const db = loadDB();
+    if (!db[tab]) db[tab] = [];
+    db[tab].splice(idx,1);
+    saveDB(db);
+    if (tab==='reminder')      renderReminder();
+    else if (currentTab===tab) renderTable(tab);
+    if (currentTab==='home')   renderHome();
+    showToast('Record deleted',true);
+  });
+}
+
+function confirmBulk(tab) {
+  const boxes = [...document.querySelectorAll(`.ecb-${tab}:checked`)];
+  if (!boxes.length) return;
+  showConfirm(
+    'Delete Selected Records?',
+    `Remove ${boxes.length} record${boxes.length>1?'s':''}? This cannot be undone.`,
+    ()=>{
+      const db = loadDB();
+      boxes.map(cb=>parseInt(cb.dataset.i)).sort((a,b)=>b-a).forEach(i=>db[tab].splice(i,1));
+      saveDB(db);
+      renderTable(tab);
+      if (currentTab==='home') renderHome();
+      showToast(`${boxes.length} record${boxes.length>1?'s':''} deleted`,true);
+    }
+  );
+}
+
+// ── reminder ──────────────────────────────────────────────────────────────────
+let dragSrcIdx = null;
+
+function renderReminder() {
+  const db   = loadDB();
+  const list = document.getElementById('rem-list');
+  if (!list) return;
+  const items = db.reminder || [];
+  if (!items.length) {
+    list.innerHTML = `<div class="rem-empty"><i class="fas fa-bell"></i><p>No reminders yet. Click New to add one.</p></div>`;
+    return;
+  }
+  list.innerHTML = items.map((r, i) => {
+    const denoFmt = r.deno ? '₹' + Number(r.deno).toLocaleString('en-IN') : '';
+    const statusBadge = r.status === '1st'
+      ? `<span class="sb s-online">1st</span>`
+      : r.status === '2nd'
+      ? `<span class="sb s-prog">2nd</span>`
+      : `<span class="sb s-other">${r.status||'—'}</span>`;
+    return `<div class="rem-card" draggable="true" data-i="${i}"
+        ondragstart="remDragStart(event,${i})"
+        ondragover="remDragOver(event)"
+        ondragleave="remDragLeave(event)"
+        ondrop="remDrop(event,${i})"
+        ondragend="remDragEnd(event)">
+      <span class="rh"><i class="fas fa-grip-vertical"></i></span>
+      <div class="rinfo">
+        <div class="rname">${r.name||'—'}</div>
+        <div class="raddr">${r.address||''}</div>
+        ${denoFmt ? `<div class="rdeno">${denoFmt}</div>` : ''}
+      </div>
+      ${statusBadge}
+      <button class="ricn" onclick="editReminder(${i})" title="Edit"><i class="fas fa-pen"></i></button>
+      <button class="ricn" onclick="deleteReminder(${i})" title="Delete" style="color:var(--red)"><i class="fas fa-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+
+function remDragStart(e, idx) {
+  dragSrcIdx = idx;
+  e.currentTarget.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+function remDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.classList.add('drag-over');
+}
+function remDragLeave(e) {
+  e.currentTarget.classList.remove('drag-over');
+}
+function remDrop(e, targetIdx) {
+  e.preventDefault();
+  e.currentTarget.classList.remove('drag-over');
+  if (dragSrcIdx === null || dragSrcIdx === targetIdx) return;
+  const db = loadDB();
+  const arr = db.reminder;
+  const moved = arr.splice(dragSrcIdx, 1)[0];
+  arr.splice(targetIdx, 0, moved);
+  db.reminder = arr;
+  saveDB(db);
+  renderReminder();
+  showToast('Order saved ✓');
+}
+function remDragEnd(e) {
+  e.currentTarget.classList.remove('dragging');
+  dragSrcIdx = null;
+}
+
+function openReminderModal(editIdx=-1) {
+  const db     = loadDB();
+  const isEdit = editIdx > -1;
+  const data   = isEdit ? (db.reminder[editIdx]||{}) : {};
+  document.getElementById('m-title').textContent = isEdit ? 'Update Reminder' : 'Add Reminder';
+  document.getElementById('eidx').value           = editIdx;
+  document.getElementById('m-del').classList.toggle('hidden', !isEdit);
+  document.getElementById('m-save').innerHTML     = isEdit
+    ? '<i class="fas fa-pen"></i> Update'
+    : '<i class="fas fa-save"></i> Save';
+  const ff = document.getElementById('ffields');
+  ff.dataset.tab = 'reminder';
+  const fields = [
+    {name:'name',   label:'Name',         type:'text'},
+    {name:'address',label:'Address',      type:'text'},
+    {name:'deno',   label:'Denomination', type:'text', format:true},
+    {name:'status', label:'Status',       type:'select', options:['1st','2nd']}
+  ];
+  ff.innerHTML = fields.map(f => {
+    const val = data[f.name]!==undefined ? data[f.name] : '';
+    let dispVal = val;
+    if (f.format && dispVal && !isNaN(dispVal)) dispVal = Number(dispVal).toLocaleString('en-IN');
+    let inp='';
+    if (f.type==='select') {
+      inp=`<select name="${f.name}" class="finput sinput-select">${f.options.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
+    } else {
+      const ev = f.format ? ` oninput="formatNum(event)" inputmode="numeric"` : '';
+      inp=`<input type="${f.type}" name="${f.name}" value="${dispVal}" class="finput" required${ev}>`;
+    }
+    return `<div class="fg"><label>${f.label}</label>${inp}</div>`;
+  }).join('');
+  let datesHtml='';
+  if (isEdit) {
+    const opts={day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'};
+    const cDate = data.createdAt ? new Date(data.createdAt).toLocaleString('en-IN',opts) : '—';
+    const uDate = data.updatedAt ? new Date(data.updatedAt).toLocaleString('en-IN',opts) : '—';
+    datesHtml=`<div class="entry-dates">Added: ${cDate} &nbsp;&bull;&nbsp; Updated: ${uDate}</div>`;
+  }
+  document.getElementById('m-dates').innerHTML = datesHtml;
+  document.getElementById('ebk').classList.add('open');
+}
+
+function editReminder(idx)   { openReminderModal(idx); }
+
+function deleteReminder(idx) {
+  showConfirm('Delete Reminder?','This cannot be undone.',()=>{
+    const db = loadDB();
+    db.reminder.splice(idx,1);
+    saveDB(db);
+    renderReminder();
+    showToast('Reminder deleted',true);
+  });
+}
+
+// ── toast ─────────────────────────────────────────────────────────────────────
+let tTimer;
+function showToast(msg, isErr=false) {
+  const t = document.getElementById('toast');
+  document.getElementById('t-msg').textContent = msg;
+  document.getElementById('t-icon').className  = isErr ? 'fas fa-trash-can' : 'fas fa-check-circle';
+  t.className = 'toast show'+(isErr?' err':'');
+  clearTimeout(tTimer);
+  tTimer = setTimeout(()=>t.classList.remove('show'), 2800);
+}
+
+// ── close on backdrop click ───────────────────────────────────────────────────
+// Modals only close via buttons — backdrop click is intentionally disabled
+
+// ── init ──────────────────────────────────────────────────────────────────────
+renderHome();
+</script>
+
+<script type="module">
+  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
+  import { getAnalytics }   from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
+  import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBwHopQvzQPMjvP23zGN9fAI8Z_kkB5mho",
+    authDomain: "dop-tracker.firebaseapp.com",
+    databaseURL: "https://dop-tracker-default-rtdb.firebaseio.com",
+    projectId: "dop-tracker",
+    storageBucket: "dop-tracker.firebasestorage.app",
+    messagingSenderId: "706087515812",
+    appId: "1:706087515812:web:1e7aea36e0b201c48cd831",
+    measurementId: "G-V5R6VN4PEQ"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  getAnalytics(app);
+  const db    = getDatabase(app);
+  const dbRef = ref(db, 'dop_db');
+
+  let isLocalUpdate = false;
+
+  function normaliseSection(val) {
+    if (!val) return [];
+    if (Array.isArray(val)) return val.filter(Boolean);
+    return Object.values(val).filter(Boolean);
+  }
+
+  window.pushToFirebase = (data) => {
+    isLocalUpdate = true;
+    set(dbRef, data)
+      .then(()=>{ setTimeout(()=>{ isLocalUpdate=false; }, 500); })
+      .catch(err=>console.error("Firebase sync error:", err));
+  };
+
+  // Push any queued data from before Firebase loaded
+  if (window.firebaseDataQueue) {
+    window.pushToFirebase(window.firebaseDataQueue);
+    window.firebaseDataQueue = null;
+  }
+
+  // If Firebase is empty but localStorage has data, push it up
+  get(dbRef).then(snapshot=>{
+    if (!snapshot.exists()) {
+      const local = window.loadDB();
+      if (local.payments.length || local.formality.length || local['default'].length || local.reminder.length)
+        window.pushToFirebase(local);
+    }
+  }).catch(err=>console.error("Firebase init error:", err));
+
+  // Listen for remote changes
+  onValue(dbRef, snapshot=>{
+    if (isLocalUpdate) return;
+    const data = snapshot.val();
+    if (!data) return;
+    const safe = {
+      payments : normaliseSection(data.payments),
+      formality: normaliseSection(data.formality),
+      'default': normaliseSection(data['default']),
+      reminder : normaliseSection(data.reminder)
+    };
+    localStorage.setItem('dop_db', JSON.stringify(safe));
+    if (typeof window.refreshUI === 'function') window.refreshUI();
+  });
+</script>
+</body>
+</html>
