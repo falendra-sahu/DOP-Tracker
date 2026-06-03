@@ -135,7 +135,7 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
 .cbc{width:36px;cursor:default;}
 .cbc:hover{background:none;}
 .rcb{width:16px;height:16px;accent-color:var(--blue);cursor:pointer}
-.sb{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.sb{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
 .s-cash{background:#d1fae5;color:#065f46}
 .s-online{background:#dbeafe;color:#1e40af}
 .s-out{background:#fee2e2;color:#991b1b}
@@ -209,6 +209,36 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
 .pill:hover{border-color:var(--blue);color:var(--blue)}
 .pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
 .pill i{font-size:10px}
+
+/* PAYMENT CARDS */
+.pay-list{display:flex;flex-direction:column;gap:10px}
+.pay-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:var(--rs);padding:16px 18px;cursor:pointer;transition:all .2s;user-select:none;display:flex;align-items:center;gap:14px}
+.pay-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);border-left-color:var(--navy)}
+.pay-card:active{transform:scale(0.98)}
+.pay-card.s-cash{border-left-color:var(--green);background:linear-gradient(135deg,#f0fdf4 0%,var(--surface) 100%)}
+.pay-card.s-online{border-left-color:#8b5cf6;background:linear-gradient(135deg,#f5f3ff 0%,var(--surface) 100%)}
+.pay-card.s-out{border-left-color:var(--red);background:linear-gradient(135deg,#fef2f2 0%,var(--surface) 100%)}
+.pay-cb{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;display:none}
+.pay-select .pay-cb{display:block}
+.pay-info{flex:1;min-width:0}
+.pay-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.pay-name i{font-size:12px;color:var(--blue);opacity:.7}
+.pay-card.s-cash .pay-name i{color:var(--green)}
+.pay-card.s-online .pay-name i{color:#8b5cf6}
+.pay-card.s-out .pay-name i{color:var(--red)}
+.pay-details{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.pay-amt{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px}
+.pay-amt i{font-size:11px;color:var(--muted)}
+.pay-month{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:5px}
+.pay-month i{font-size:11px;opacity:.7}
+.pay-right{display:flex;align-items:center;flex-shrink:0}
+.pay-card .sb{padding:4px 12px;font-size:11px;font-weight:500;letter-spacing:.3px}
+.sel-all-pill{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;cursor:pointer}
+.sel-all-pill:hover{background:#1d4ed8!important}
+.sel-all-pill.active{background:var(--red)!important;border-color:var(--red)!important}
+.pay-empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.pay-empty i{font-size:38px;opacity:.2;margin-bottom:10px;display:block}
+.pay-empty p{font-size:15px}
 
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
@@ -310,6 +340,7 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
           <input class="sinput" id="s-payments" type="text" placeholder="Search payments…" oninput="filterTable('payments')">
         </div>
         <button class="btn btn-d hidden" id="bulk-payments" onclick="confirmBulk('payments')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-g" id="select-payments" onclick="toggleSelectMode('payments')"><i class="fas fa-check-double"></i> Select</button>
         <button class="btn btn-p" onclick="openModal('payments')"><i class="fas fa-plus"></i> New</button>
       </div>
       <div class="filter-pills" id="fp-payments">
@@ -323,9 +354,10 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
         <span class="pill" onclick="setStatusFilter('payments','Online')"><i class="fas fa-globe"></i> Online</span>
         <span class="pill" onclick="setStatusFilter('payments','Out')"><i class="fas fa-arrow-right-from-bracket"></i> Out</span>
       </div>
-      <div class="tbox"><div class="twrap">
-        <table><thead id="th-payments"></thead><tbody id="tb-payments"></tbody></table>
-      </div></div>
+      <div class="filter-pills hidden" id="select-bar-payments">
+        <span class="pill sel-all-pill" onclick="toggleAll('payments')"><i class="fas fa-check-double"></i> Select All</span>
+      </div>
+      <div id="tb-payments" class="pay-list"></div>
     </div>
 
     <div id="page-formality" class="page">
@@ -525,6 +557,34 @@ function setStatusFilter(tab, status) {
   renderTable(tab);
 }
 
+let selectMode = { payments: false };
+
+function toggleSelectMode(tab) {
+  selectMode[tab] = !selectMode[tab];
+  const btn = document.getElementById('select-' + tab);
+  const list = document.getElementById('tb-' + tab);
+  const selBar = document.getElementById('select-bar-' + tab);
+  if (selectMode[tab]) {
+    btn.classList.add('active');
+    btn.innerHTML = '<i class="fas fa-xmark"></i> Cancel';
+    btn.classList.remove('btn-g');
+    btn.classList.add('btn-d');
+    if (list) list.classList.add('pay-select');
+    if (selBar) selBar.classList.remove('hidden');
+  } else {
+    btn.classList.remove('active');
+    btn.innerHTML = '<i class="fas fa-check-double"></i> Select';
+    btn.classList.remove('btn-d');
+    btn.classList.add('btn-g');
+    if (list) list.classList.remove('pay-select');
+    if (selBar) selBar.classList.add('hidden');
+    document.querySelectorAll('.ecb-payments').forEach(cb => cb.checked = false);
+    const sa = document.getElementById('sa-payments');
+    if (sa) sa.checked = false;
+    syncBulk(tab);
+  }
+}
+
 // ── formatting ───────────────────────────────────────────────────────────────
 function formatNum(e) {
   let val = e.target.value.replace(/[^0-9]/g, '');
@@ -634,18 +694,20 @@ function renderTable(tab) {
   const head = document.getElementById('th-' + tab);
   const body = document.getElementById('tb-' + tab);
 
-  if (!head || !body) return; // page not in DOM yet
+  if (!body) return; // page not in DOM yet
 
-  head.innerHTML = `<tr>
-    <th class="cbc" onclick="event.stopPropagation()">
-      <input type="checkbox" class="rcb" id="sa-${tab}" onclick="toggleAll('${tab}',this)">
-    </th>
-    ${c.cols.map((col,idx) => {
-      const key      = c.keys[idx];
-      const isActive = currentSort.tab===tab && currentSort.key===key;
-      return `<th onclick="handleSort('${tab}','${key}')" class="${isActive?'active-sort':''}">${col}${getSortIcon(tab,key)}</th>`;
-    }).join('')}
-  </tr>`;
+  if (tab !== 'payments' && head) {
+    head.innerHTML = `<tr>
+      <th class="cbc" onclick="event.stopPropagation()">
+        <input type="checkbox" class="rcb" id="sa-${tab}" onclick="toggleAll('${tab}',this)">
+      </th>
+      ${c.cols.map((col,idx) => {
+        const key      = c.keys[idx];
+        const isActive = currentSort.tab===tab && currentSort.key===key;
+        return `<th onclick="handleSort('${tab}','${key}')" class="${isActive?'active-sort':''}">${col}${getSortIcon(tab,key)}</th>`;
+      }).join('')}
+    </tr>`;
+  }
 
   // Get the right array (handles 'default' key)
   let rows = (db[tab] || []).map((r,i) => ({...r, _idx:i}));
@@ -736,26 +798,52 @@ function renderTable(tab) {
   }
 
   if (!rows.length) {
-    body.innerHTML = `<tr><td colspan="${c.cols.length+1}">
-      <div class="empty"><i class="fas fa-inbox"></i>
-      <p>${filter?'No matching records.':'No records yet. Click New to add one.'}</p></div>
-    </td></tr>`;
+    if (tab === 'payments') {
+      body.innerHTML = `<div class="pay-empty"><i class="fas fa-inbox"></i>
+        <p>${filter?'No matching records.':'No records yet. Click New to add one.'}</p></div>`;
+    } else {
+      body.innerHTML = `<tr><td colspan="${c.cols.length+1}">
+        <div class="empty"><i class="fas fa-inbox"></i>
+        <p>${filter?'No matching records.':'No records yet. Click New to add one.'}</p></div>
+      </td></tr>`;
+    }
     syncBulk(tab);
     return;
   }
 
-  body.innerHTML = rows.map(row => {
-    const cells = c.keys.map(key => {
-      const val     = row[key]||'';
-      const display = (key==='status') ? badge(tab,val) : fmt(key,val);
-      return `<td onclick="openModal('${tab}',${row._idx})">${display}</td>`;
+  if (tab === 'payments') {
+    body.innerHTML = rows.map(row => {
+      const statusCls = row.status === 'Cash' ? 's-cash' : row.status === 'Online' ? 's-online' : row.status === 'Out' ? 's-out' : '';
+      const amtFmt = row.amount ? '₹ ' + Number(row.amount).toLocaleString('en-IN') : '—';
+      const monthFmt = row.month ? fmt('month', row.month) : '—';
+      return `<div class="pay-card ${statusCls}" onclick="openModal('payments',${row._idx})">
+        <input type="checkbox" class="pay-cb ecb-payments" data-i="${row._idx}" onclick="event.stopPropagation();syncBulk('payments')">
+        <div class="pay-info">
+          <div class="pay-name"><i class="fas fa-user"></i> ${row.name || '—'}</div>
+          <div class="pay-details">
+            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${amtFmt}</span>
+            <span class="pay-month"><i class="fas fa-calendar"></i> ${monthFmt}</span>
+          </div>
+        </div>
+        <div class="pay-right">
+          ${badge('payments', row.status)}
+        </div>
+      </div>`;
     }).join('');
-    return `<tr>
-      <td class="cbc" onclick="event.stopPropagation()">
-        <input type="checkbox" class="rcb ecb-${tab}" data-i="${row._idx}" onclick="syncBulk('${tab}')">
-      </td>${cells}
-    </tr>`;
-  }).join('');
+  } else {
+    body.innerHTML = rows.map(row => {
+      const cells = c.keys.map(key => {
+        const val     = row[key]||'';
+        const display = (key==='status') ? badge(tab,val) : fmt(key,val);
+        return `<td onclick="openModal('${tab}',${row._idx})">${display}</td>`;
+      }).join('');
+      return `<tr>
+        <td class="cbc" onclick="event.stopPropagation()">
+          <input type="checkbox" class="rcb ecb-${tab}" data-i="${row._idx}" onclick="syncBulk('${tab}')">
+        </td>${cells}
+      </tr>`;
+    }).join('');
+  }
 
   syncBulk(tab);
 }
@@ -764,7 +852,21 @@ function filterTable(tab) { renderTable(tab); }
 
 // ── bulk / checkbox ───────────────────────────────────────────────────────────
 function toggleAll(tab, master) {
-  document.querySelectorAll(`.ecb-${tab}`).forEach(cb => cb.checked = master.checked);
+  const cbs = document.querySelectorAll(`.ecb-${tab}`);
+  const sa = document.getElementById('sa-' + tab);
+  const pill = document.querySelector('.sel-all-pill');
+  
+  if (tab === 'payments' && !master) {
+    // Called from pill click
+    const allChecked = cbs.length > 0 && [...cbs].every(cb => cb.checked);
+    const newState = !allChecked;
+    cbs.forEach(cb => cb.checked = newState);
+    if (pill) pill.classList.toggle('active', newState);
+  } else {
+    // Called from checkbox
+    cbs.forEach(cb => cb.checked = master.checked);
+    if (pill) pill.classList.toggle('active', master.checked);
+  }
   syncBulk(tab);
 }
 
@@ -778,6 +880,10 @@ function syncBulk(tab) {
   }
   const sa = document.getElementById('sa-'+tab);
   if (sa) { sa.checked = total>0 && checked===total; sa.indeterminate = checked>0 && checked<total; }
+  if (tab === 'payments') {
+    const pill = document.querySelector('.sel-all-pill');
+    if (pill) pill.classList.toggle('active', total>0 && checked===total);
+  }
 }
 
 // ── modal ─────────────────────────────────────────────────────────────────────
