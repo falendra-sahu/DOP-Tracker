@@ -203,6 +203,13 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
 .toast{position:fixed;bottom:calc(var(--nb) + 20px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:12px 22px;border-radius:var(--rs);font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);z-index:999;opacity:0;pointer-events:none;transition:all .3s;display:flex;align-items:center;gap:8px;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .toast.err{background:var(--red)}
+/* FILTER PILLS */
+.filter-pills{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.pill{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:var(--surface);color:var(--muted);transition:all .15s;display:flex;align-items:center;gap:5px}
+.pill:hover{border-color:var(--blue);color:var(--blue)}
+.pill.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.pill i{font-size:10px}
+
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}
 </style>
@@ -304,6 +311,17 @@ tbody tr:hover td{background:#fafbff;cursor:pointer}
         </div>
         <button class="btn btn-d hidden" id="bulk-payments" onclick="confirmBulk('payments')"><i class="fas fa-trash"></i> Delete</button>
         <button class="btn btn-p" onclick="openModal('payments')"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="filter-pills" id="fp-payments">
+        <span class="pill active" onclick="setDateSort('payments','default')"><i class="fas fa-list"></i> Original</span>
+        <span class="pill" onclick="setDateSort('payments','createdAt')"><i class="fas fa-clock-rotate-left"></i> Date Added</span>
+        <span class="pill" onclick="setDateSort('payments','updatedAt')"><i class="fas fa-pen-to-square"></i> Date Updated</span>
+      </div>
+      <div class="filter-pills" id="fs-payments">
+        <span class="pill active" onclick="setStatusFilter('payments','all')">All</span>
+        <span class="pill" onclick="setStatusFilter('payments','Cash')"><i class="fas fa-money-bill-wave"></i> Cash</span>
+        <span class="pill" onclick="setStatusFilter('payments','Online')"><i class="fas fa-globe"></i> Online</span>
+        <span class="pill" onclick="setStatusFilter('payments','Out')"><i class="fas fa-arrow-right-from-bracket"></i> Out</span>
       </div>
       <div class="tbox"><div class="twrap">
         <table><thead id="th-payments"></thead><tbody id="tb-payments"></tbody></table>
@@ -465,6 +483,8 @@ const CFG = {
 
 // ── sort state ───────────────────────────────────────────────────────────────
 let currentSort = { tab: '', key: '', dir: 'asc' };
+let dateSort = { payments: 'default' };
+let statusFilter = { payments: 'all' };
 
 function handleSort(tab, key) {
   if (currentSort.tab === tab && currentSort.key === key) {
@@ -484,6 +504,25 @@ function getSortIcon(tab, key) {
   return currentSort.dir === 'asc'
     ? '<i class="fas fa-sort-up sort-icon"></i>'
     : '<i class="fas fa-sort-down sort-icon"></i>';
+}
+
+// ── date sort pills ──────────────────────────────────────────────────────────
+function setDateSort(tab, mode) {
+  dateSort[tab] = mode;
+  const pills = document.querySelectorAll('#fp-' + tab + ' .pill');
+  pills.forEach(p => p.classList.remove('active'));
+  const idx = mode === 'default' ? 0 : mode === 'createdAt' ? 1 : 2;
+  if (pills[idx]) pills[idx].classList.add('active');
+  renderTable(tab);
+}
+
+function setStatusFilter(tab, status) {
+  statusFilter[tab] = status;
+  const pills = document.querySelectorAll('#fs-' + tab + ' .pill');
+  pills.forEach(p => p.classList.remove('active'));
+  const idx = status === 'all' ? 0 : status === 'Cash' ? 1 : status === 'Online' ? 2 : 3;
+  if (pills[idx]) pills[idx].classList.add('active');
+  renderTable(tab);
 }
 
 // ── formatting ───────────────────────────────────────────────────────────────
@@ -617,6 +656,11 @@ function renderTable(tab) {
     rows = rows.filter(r => Object.values(r).some(v => (v+'').toLowerCase().includes(f)));
   }
 
+  // status filter
+  if (statusFilter[tab] && statusFilter[tab] !== 'all') {
+    rows = rows.filter(r => r.status === statusFilter[tab]);
+  }
+
   // sort
   if (currentSort.tab===tab && currentSort.key) {
     const key = currentSort.key;
@@ -629,6 +673,13 @@ function renderTable(tab) {
         return (A-B)*dir;
       }
       return (A+'').localeCompare(B+'')*dir;
+    });
+  } else if (dateSort[tab] && dateSort[tab] !== 'default') {
+    const dKey = dateSort[tab];
+    rows.sort((a,b) => {
+      const da = a[dKey] ? new Date(a[dKey]).getTime() : 0;
+      const db_ = b[dKey] ? new Date(b[dKey]).getTime() : 0;
+      return db_ - da;
     });
   }
 
@@ -788,7 +839,7 @@ function saveEntry(e) {
     obj[k] = ['amount','deno','days'].includes(k) ? v.trim().replace(/,/g,'') : v.trim();
   });
   if (idx>-1) { db[tab][idx]=obj; showToast('Entry updated ✓'); }
-  else        { db[tab].push(obj); showToast('Entry added ✓'); }
+  else        { db[tab].unshift(obj); showToast('Entry added ✓'); }
   saveDB(db);
   closeModal();
   if (tab==='reminder')      renderReminder();
