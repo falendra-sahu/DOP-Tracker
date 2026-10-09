@@ -46,6 +46,7 @@ body{cursor:default}
 .sync-dot.sync-synced{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.7)}
 .sync-dot.sync-pending,.sync-dot.sync-syncing{background:#f59e0b}
 .sync-dot.sync-offline{background:#64748b}
+.sync-dot.sync-blocked{background:#ef4444;box-shadow:0 0 6px rgba(239,68,68,.7)}
 .dtabs{display:none;background:rgba(255,255,255,.08);border-radius:10px;padding:4px;gap:2px}
 @media(min-width:769px){.dtabs{display:flex}}
 .dtab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s ease-out,color .15s ease-out;border:none;background:none;font-family:var(--font);will-change:background,color}
@@ -484,6 +485,7 @@ body{cursor:default}
           <button class="btn btn-g" onclick="askPassword('Enter password to import backup.', importAllData)" style="color:#16a34a;border-color:#bbf7d0"><i class="fas fa-file-import"></i> Import</button>
           <button class="btn btn-g" onclick="openChangePassword()" style="color:var(--muted)" title="Change password"><i class="fas fa-key"></i> Password</button>
         </div>
+        <div id="sync-warn" class="hidden" style="flex-basis:100%;margin-top:10px;font-size:12px;font-weight:600;color:#991b1b;background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px">Cloud sync is blocked — open Firebase console → Realtime Database → Rules, allow read and write for /dop, then reload this page.</div>
       </div>
     </div>
 
@@ -1929,6 +1931,15 @@ function importRemindersExcel() {
   });
 }
 
+// Deterministic sync id for imported rows: importing the same file on any
+// device yields the same ids, so the cloud union never duplicates them.
+// Ids already present (e.g. rows exported from this app) are preserved.
+function importRid(sec, obj, idx) {
+  let js = '';
+  try { js = JSON.stringify(obj); } catch (e) { js = String(idx); }
+  return 'r_imp_' + sec + '_' + hashPw(js + '|' + idx);
+}
+
 function importReminderRows(rows) {
   const NAME_KEYS = ['name','customername','membername','holdername','accountname'];
   const ADDR_KEYS = ['address','addr','location','place'];
@@ -1943,11 +1954,11 @@ function importReminderRows(rows) {
   if (!db.reminder) db.reminder = [];
   const now = new Date().toISOString();
   let added = 0;
-  clean.forEach(r => {
+  clean.forEach((r, ri) => {
     const s = String(pickCol(r, STAT_KEYS)).trim().toLowerCase();
     let st = '1st';
     if (s === '2nd' || s === '2' || s.startsWith('2') || s.includes('second')) st = '2nd';
-    db.reminder.push({
+    const rec = {
       id      : newRemId(),
       name    : String(pickCol(r, NAME_KEYS)).trim(),
       address : String(pickCol(r, ADDR_KEYS)).trim(),
@@ -1956,7 +1967,9 @@ function importReminderRows(rows) {
       received: cleanNum(pickCol(r, RECV_KEYS)),
       createdAt: now,
       updatedAt: now
-    });
+    };
+    rec._rid = importRid('reminder', rec, ri);
+    db.reminder.push(rec);
     added++;
   });
   if (!added) { showToast('No valid rows found in file', true); return; }
@@ -2019,13 +2032,14 @@ function importAllData() {
         if (!sec) return;
         let rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: '', raw: false });
         rows = rows.filter(r => r && Object.values(r).some(v => String(v).trim() !== ''));
-        rows = rows.map(r => {
+        rows = rows.map((r, ri) => {
           const o = {};
           Object.keys(r).forEach(k => {
             let v = r[k];
             if (v instanceof Date) v = v.toISOString();
             o[k] = typeof v === 'string' ? v.trim() : v;
           });
+          if (!o._rid) o._rid = importRid(sec, o, ri);
           return o;
         });
         sections[sec] = rows;
@@ -2487,11 +2501,15 @@ const CLOUD_PATH = 'dop/v1/state';
 
 window.__setSyncState = function (s) {
   const d = document.getElementById('sync-dot');
-  if (!d) return;
-  d.className = 'sync-dot sync-' + s;
-  d.title = s === 'synced' ? 'All data synced'
-    : (s === 'syncing' || s === 'pending') ? 'Syncing…'
-    : 'Offline — changes saved on this device';
+  if (d) {
+    d.className = 'sync-dot sync-' + s;
+    d.title = s === 'synced' ? 'All data synced'
+      : (s === 'syncing' || s === 'pending') ? 'Syncing…'
+      : s === 'blocked' ? 'Sync blocked: allow read/write in Firebase Database Rules'
+      : 'Offline — changes saved on this device';
+  }
+  const w = document.getElementById('sync-warn');
+  if (w) w.classList.toggle('hidden', s !== 'blocked');
 };
 
 (async () => {
@@ -2515,9 +2533,21 @@ window.__setSyncState = function (s) {
 
   const dbRef = ref(db, CLOUD_PATH);
   let pushTimer = null;
+  let pushing = false;
+  let queued = false;
   let lastSentRev = null;
   let lastSentBody = null;
+  let ruleHintShown = false;
   try { lastSentBody = localStorage.getItem('dop_lastpush') || null; } catch (e) {}
+
+  const isDenied = (e) => e && (e.code === 'PERMISSION_DENIED' || /permission denied/i.test(e.message || ''));
+  const flagBlocked = () => {
+    setSync('blocked');
+    if (!ruleHintShown) {
+      ruleHintShown = true;
+      try { window.showToast && window.showToast('Cloud sync blocked: allow read/write in Firebase Database Rules', true); } catch (e) {}
+    }
+  };
 
   const bodyOf = () => {
     const d = window.loadDB();
@@ -2535,42 +2565,86 @@ window.__setSyncState = function (s) {
 
   async function pushNow() {
     pushTimer = null;
-    let body = null;
-    try { body = bodyOf(); } catch (e) { return; }
-    if (body === lastSentBody) { setSync('synced'); return; }
-    setSync('syncing');
-    const rev = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    if (pushing) { queued = true; return; }
+    pushing = true;
     try {
-      const payload = JSON.parse(body);
-      payload.rev = rev;
-      payload.updatedAt = Date.now();
-      await set(dbRef, payload);
-      lastSentRev = rev;
-      lastSentBody = body;
-      try { localStorage.setItem('dop_lastpush', body); } catch (e) {}
-      setSync('synced');
-    } catch (e) { setSync('offline'); }
+      let body = null;
+      try { body = bodyOf(); } catch (e) { return; }
+      if (body === lastSentBody) { setSync('synced'); return; }
+      setSync('syncing');
+      const rev = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+      try {
+        const payload = JSON.parse(body);
+        payload.rev = rev;
+        payload.updatedAt = Date.now();
+        await set(dbRef, payload);
+        lastSentRev = rev;
+        lastSentBody = body;
+        try { localStorage.setItem('dop_lastpush', body); } catch (e) {}
+        setSync('synced');
+      } catch (e) { if (isDenied(e)) flagBlocked(); else setSync('offline'); }
+    } finally {
+      pushing = false;
+      if (queued) { queued = false; pushNow(); }
+    }
   }
+
+  const flushSync = () => {
+    if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; pushNow(); }
+  };
 
   window.__cloudSchedulePush = () => {
     setSync('pending');
     if (pushTimer) clearTimeout(pushTimer);
-    pushTimer = setTimeout(pushNow, 900);
+    pushTimer = setTimeout(pushNow, 250);
   };
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') flushSync();
+  });
+  window.addEventListener('pagehide', flushSync);
+
+  // One-time migration: records created before sync existed have no _rid.
+  // Ids are content-based, so the same record on two devices gets the same
+  // id and the cloud union heals overlaps instead of duplicating them.
+  try {
+    const d0 = window.loadDB();
+    let needSave = false;
+    ['payments', 'formality', 'default', 'reminder', 'archive'].forEach(sec => {
+      (d0[sec] || []).forEach((r, i) => {
+        if (r && !r._rid) {
+          try { r._rid = window.importRid(sec, r, i); }
+          catch (e) { r._rid = 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9); }
+          needSave = true;
+        }
+      });
+    });
+    if (needSave && window.saveDB) window.saveDB(d0);
+  } catch (e) {}
 
   async function pullAndMerge() {
     setSync('syncing');
     let snap = null;
-    try { snap = await get(dbRef); } catch (e) { setSync('offline'); return; }
+    try { snap = await get(dbRef); } catch (e) { if (isDenied(e)) flagBlocked(); else setSync('offline'); return; }
     const val = snap && snap.val ? snap.val() : null;
-    if (!val || !val.sections) { pushNow(); return; }
+    if (!val || !val.sections) {
+      let hasLocal = false;
+      try {
+        const d = window.loadDB();
+        hasLocal = ['payments', 'formality', 'default', 'reminder', 'archive']
+          .some(sec => (d[sec] || []).length > 0);
+        if (!hasLocal && window.loadTomb) hasLocal = Object.keys(window.loadTomb()).length > 0;
+      } catch (e) {}
+      if (hasLocal) pushNow();
+      else setSync('synced');
+      return;
+    }
     if (val.rev && val.rev === lastSentRev) { setSync('synced'); return; }
     let changed = false;
     try { changed = window.mergeCloudData(val); } catch (e) { changed = false; }
     if (changed) {
       try { window.refreshUI(); } catch (e) {}
     } else {
-      setSync('synced');
+      pushNow();
     }
   }
 
@@ -2583,7 +2657,7 @@ window.__setSyncState = function (s) {
       let changed = false;
       try { changed = window.mergeCloudData(val); } catch (e) {}
       if (changed) { try { window.refreshUI(); } catch (e) {} }
-    });
+    }, (err) => { if (isDenied(err)) flagBlocked(); else setSync('offline'); });
   } catch (e) {}
 
   await pullAndMerge();
