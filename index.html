@@ -29,6 +29,7 @@
 }
 html{scroll-behavior:smooth;will-change:scroll-position}
 html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--text);overscroll-behavior-y:contain;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{cursor:default}
 
 .app{display:flex;flex-direction:column;height:100%;max-width:1200px;margin:0 auto}
 @media(min-width:769px){.app{padding:24px;gap:20px}}
@@ -41,6 +42,10 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 .hicon i{color:#fff;font-size:16px}
 .htitle{font-family:var(--fh);font-size:20px;font-weight:700;color:#fff;letter-spacing:-.3px}
 .hsub{font-size:11px;color:rgba(255,255,255,.5);font-weight:500;text-transform:uppercase;letter-spacing:.8px;margin-top:1px}
+.sync-dot{width:9px;height:9px;border-radius:50%;background:#94a3b8;flex-shrink:0;display:inline-block}
+.sync-dot.sync-synced{background:#10b981;box-shadow:0 0 6px rgba(16,185,129,.7)}
+.sync-dot.sync-pending,.sync-dot.sync-syncing{background:#f59e0b}
+.sync-dot.sync-offline{background:#64748b}
 .dtabs{display:none;background:rgba(255,255,255,.08);border-radius:10px;padding:4px;gap:2px}
 @media(min-width:769px){.dtabs{display:flex}}
 .dtab{padding:8px 16px;border-radius:8px;font-size:13px;font-weight:600;color:rgba(255,255,255,.55);cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .15s ease-out,color .15s ease-out;border:none;background:none;font-family:var(--font);will-change:background,color}
@@ -69,7 +74,10 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 .sc-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px}
 .sc-val{font-family:var(--fh);font-size:40px;font-weight:700;color:var(--text);line-height:1}
 .sc-icon{position:absolute;right:16px;top:50%;transform:translateY(-50%);font-size:38px;opacity:.06}
-.home-rec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
+.home-rec{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;margin-bottom:16px}
+.home-backup{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.backup-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.backup-actions{display:flex;gap:8px;flex-wrap:wrap}
 @media(min-width:769px){.home-rec{border-top:1px solid var(--border);border-radius:0 0 var(--r) var(--r)}}
 .rec-head{padding:14px 20px;border-bottom:1px solid var(--border)}
 .rec-title{font-family:var(--fh);font-size:14px;font-weight:700}
@@ -121,28 +129,7 @@ html,body{height:100%;background:var(--bg);font-family:var(--font);color:var(--t
 .sec-title{font-family:var(--fh);font-size:20px;font-weight:700;margin-bottom:3px}
 .sec-sub{font-size:13px;color:var(--muted);margin-bottom:0}
 
-/* TABLE */
-.tbox{border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
-.twrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:14px}
-thead{background:#f8fafc}
-th{padding:12px 14px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);border-bottom:1px solid var(--border);border-right:1px solid #e2e8f0;white-space:nowrap;cursor:pointer;user-select:none;}
-th:first-child,th:nth-child(2){text-align:left}
-th:last-child{border-right:none}
-th:hover { background-color: #f1f5f9; }
-td{padding:13px 14px;border-bottom:1px solid #f1f5f9;border-right:1px solid #e2e8f0;color:var(--text);vertical-align:middle;transition:background 0.15s;text-align:center}
-td:first-child,td:nth-child(2){text-align:left}
-td:last-child{border-right:none}
-tr:last-child td{border-bottom:none}
-tbody tr:hover td{background:#fafbff;cursor:pointer}
-tbody tr:nth-child(even) td{background:#f8fafc}
-tbody tr:nth-child(even):hover td{background:#f1f5f9}
-.cbc{width:36px;cursor:default;display:none}
-.cbc:hover{background:none;}
-.rcb{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;display:none}
-.pay-select .cbc{display:table-cell}
-.pay-select .cbc .rcb{display:block}
-.pay-select .pay-cb{display:block}
+/* CARDS (single view - no desktop table) */
 .sb{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500}
 .s-cash{background:#d1fae5;color:#065f46}
 .s-online{background:#dbeafe;color:#1e40af}
@@ -190,23 +177,60 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
 .cact .btn{flex:1;justify-content:center}
 
 /* REMINDER DRAG-DROP */
-.rem-list{display:flex;flex-direction:column;gap:8px;contain:layout style}
-.rem-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--rs);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:grab;transition:box-shadow .15s ease-out,transform .15s ease-out,opacity .15s ease-out;user-select:none;will-change:transform,box-shadow;contain:layout paint}
-.rem-card:active{cursor:grabbing;}
+.rem-list{display:grid;grid-template-columns:1fr;gap:12px;contain:layout style}
+.rem-card{position:relative;background:linear-gradient(160deg,#fff 0%,#fbfcfe 100%);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;cursor:grab;transition:box-shadow .2s ease,transform .2s ease,opacity .2s ease,border-left-color .2s ease;user-select:none;will-change:transform,box-shadow;contain:layout paint;overflow:hidden;min-width:0}
+.rem-card .pay-info{flex:1;min-width:0}
+.rem-st{flex-shrink:0;display:flex;align-items:center}
+.rem-st .sb{padding:5px 13px;font-size:11px;font-weight:700;letter-spacing:.5px}
+.rem-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,99,235,.06),transparent 55%);opacity:0;transition:opacity .2s ease;pointer-events:none}
+.rem-card:hover{box-shadow:0 10px 28px rgba(30,58,95,.14);transform:translateY(-3px)}
+.rem-card:hover::after{opacity:1}
+.rem-card:active{transform:scale(0.98);transition-duration:.08s;cursor:grabbing}
+.rem-card.s-online{border-left-color:#8b5cf6;background:linear-gradient(160deg,#f5f3ff 0%,#ffffff 60%)}
+.rem-card.s-prog{border-left-color:var(--accent);background:linear-gradient(160deg,#fffbeb 0%,#ffffff 60%)}
+.rem-card.s-other{border-left-color:#94a3b8;background:linear-gradient(160deg,#f8fafc 0%,#ffffff 60%)}
+.rem-card.s-online .pay-name i{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 3px 8px rgba(139,92,246,.3)}
+.rem-card.s-prog .pay-name i{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 3px 8px rgba(245,158,11,.3)}
+.rem-card.s-other .pay-name i{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 3px 8px rgba(100,116,139,.3)}
+.rem-card .pay-name i{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--blue),var(--navy));border-radius:50%;opacity:1;box-shadow:0 3px 8px rgba(37,99,235,.3)}
 .rem-card.dragging{opacity:.4;transform:scale(0.98);transition-duration:.08s}
 .rem-card.drag-over{box-shadow:0 0 0 2px var(--blue);border-color:var(--blue)}
 .rh{width:18px;flex-shrink:0;color:var(--muted);font-size:15px;cursor:grab;}
 .rh:active{cursor:grabbing;}
-.rinfo{flex:1;min-width:0;}
-.rname{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.raddr{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.rdeno{font-size:12px;color:var(--muted);}
+.rem-card .pay-name{gap:10px;min-width:0;font-family:var(--fh);font-size:15px;font-weight:700;letter-spacing:-.2px;margin-bottom:9px}
+.rem-nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rem-card .pay-details{gap:8px}
+.rem-card .pay-right{gap:8px}
 .racts{display:flex;align-items:center;gap:8px;flex-shrink:0;}
-.ricn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:4px 6px;border-radius:6px;transition:background .15s,color .15s;}
+.ricn{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;padding:5px 7px;border-radius:8px;transition:background .15s,color .15s;}
 .ricn:hover{background:var(--bg);color:var(--text);}
 .rem-empty{text-align:center;padding:60px 20px;color:var(--muted);}
 .rem-empty i{font-size:38px;opacity:.2;margin-bottom:10px;display:block;}
 .rem-empty p{font-size:15px;}
+.rem-card.paid{opacity:.5;background:linear-gradient(160deg,#f8fafc 0%,#ffffff 60%);border-style:dashed;border-left-style:solid;border-left-color:var(--green);cursor:default}
+.rem-card.paid::after{display:none}
+.rem-card.paid .rh{opacity:.35}
+.rem-card.paid .rem-nm{text-decoration:line-through;color:var(--muted)}
+.rem-card.paid:hover{opacity:.75;transform:none;box-shadow:var(--shadow)}
+.rem-paid{font-size:11px;font-weight:700;padding:5px 13px;border-radius:20px;white-space:nowrap;background:#d1fae5;color:#065f46;display:flex;align-items:center;gap:5px;flex-shrink:0;box-shadow:0 2px 6px rgba(16,185,129,.18)}
+.rem-recv{font-size:11px;font-weight:700;color:var(--green);display:flex;align-items:center;gap:6px;flex-shrink:0;background:#d1fae5;padding:4px 10px;border-radius:8px}
+.rem-card .pay-cb{width:20px;height:20px;flex-shrink:0;display:none;pointer-events:auto;appearance:none;-webkit-appearance:none;cursor:pointer;border:2px solid #cbd5e1;border-radius:6px;background:#fff;position:relative;transition:border-color .15s,background .15s,box-shadow .15s}
+.rem-card .pay-cb:hover{border-color:var(--blue)}
+.rem-card .pay-cb:checked{background:var(--blue);border-color:var(--blue);box-shadow:0 2px 6px rgba(37,99,235,.35)}
+.rem-card .pay-cb:checked::after{content:'';position:absolute;left:5px;top:1px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
+.pay-select .rem-card .pay-cb{display:block}
+.rem-select .rem-card{cursor:pointer}
+.pay-select .rem-card{cursor:pointer}
+/* REMINDER DETAIL */
+.rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+@media(max-width:480px){.rd-grid{grid-template-columns:1fr}}
+.rd-item{background:#f8fafc;border:1px solid var(--border);border-radius:var(--rs);padding:10px 12px;min-width:0}
+.rd-lbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px}
+.rd-val{font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis}
+.rem-tick{width:22px;height:22px;flex-shrink:0;appearance:none;-webkit-appearance:none;cursor:pointer;border:2px solid #cbd5e1;border-radius:50%;background:#fff;position:relative;transition:border-color .15s,background .15s,box-shadow .15s}
+.rem-tick:hover{border-color:var(--green)}
+.rem-tick:checked{background:var(--green);border-color:var(--green);box-shadow:0 2px 6px rgba(16,185,129,.4)}
+.rem-tick:checked::after{content:'';position:absolute;left:6px;top:2px;width:5px;height:10px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg)}
 /* TOAST */
 .toast{position:fixed;bottom:calc(var(--nb) + 20px);left:50%;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:12px 22px;border-radius:var(--rs);font-size:13px;font-weight:600;box-shadow:var(--shadow-lg);z-index:999;opacity:0;pointer-events:none;transition:opacity .2s ease-out,transform .2s ease-out;display:flex;align-items:center;gap:8px;white-space:nowrap;will-change:transform,opacity}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -220,36 +244,39 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
 
 /* PAYMENT CARDS */
 .pay-list{display:flex;flex-direction:column;gap:10px;contain:layout style}
-.mobile-view{display:none}
-.desktop-view{display:block}
-@media(max-width:768px){
-  .mobile-view{display:flex;flex-direction:column;gap:10px}
-  .desktop-view{display:none}
-}
-.pay-card{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:var(--rs);padding:16px 18px;cursor:pointer;transition:box-shadow .15s ease-out,transform .15s ease-out,border-left-color .15s ease-out;user-select:none;display:flex;align-items:center;gap:14px;will-change:transform,box-shadow;contain:layout paint}
-.pay-card:hover{box-shadow:var(--shadow);transform:translateY(-2px);border-left-color:var(--navy)}
+.mobile-view{display:grid;grid-template-columns:1fr;gap:12px}
+@media(min-width:769px){.mobile-view{grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}}
+.pay-card{position:relative;background:linear-gradient(160deg,#fff 0%,#fbfcfe 100%);border:1px solid var(--border);border-left:4px solid var(--blue);border-radius:12px;padding:16px 18px;cursor:pointer;transition:box-shadow .2s ease,transform .2s ease,border-left-color .2s ease;user-select:none;display:flex;align-items:center;gap:14px;will-change:transform,box-shadow;contain:layout paint;overflow:hidden}
+.pay-card::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(37,99,235,.06),transparent 55%);opacity:0;transition:opacity .2s ease;pointer-events:none}
+.pay-card:hover{box-shadow:0 10px 28px rgba(30,58,95,.14);transform:translateY(-3px);border-left-color:var(--navy)}
+.pay-card:hover::after{opacity:1}
 .pay-card:active{transform:scale(0.98);transition-duration:.08s}
-.pay-card.s-cash{border-left-color:var(--green);background:linear-gradient(135deg,#f0fdf4 0%,var(--surface) 100%)}
-.pay-card.s-online{border-left-color:#8b5cf6;background:linear-gradient(135deg,#f5f3ff 0%,var(--surface) 100%)}
-.pay-card.s-out{border-left-color:var(--red);background:linear-gradient(135deg,#fef2f2 0%,var(--surface) 100%)}
-.pay-card.s-prog{border-left-color:var(--accent);background:linear-gradient(135deg,#fffbeb 0%,var(--surface) 100%)}
-.pay-card.s-done{border-left-color:var(--green);background:linear-gradient(135deg,#f0fdf4 0%,var(--surface) 100%)}
-.pay-card.s-other{border-left-color:#94a3b8;background:linear-gradient(135deg,#f8fafc 0%,var(--surface) 100%)}
+.pay-card.s-cash{border-left-color:var(--green);background:linear-gradient(160deg,#f0fdf4 0%,#ffffff 60%)}
+.pay-card.s-online{border-left-color:#8b5cf6;background:linear-gradient(160deg,#f5f3ff 0%,#ffffff 60%)}
+.pay-card.s-out{border-left-color:var(--red);background:linear-gradient(160deg,#fef2f2 0%,#ffffff 60%)}
+.pay-card.s-prog{border-left-color:var(--accent);background:linear-gradient(160deg,#fffbeb 0%,#ffffff 60%)}
+.pay-card.s-done{border-left-color:var(--green);background:linear-gradient(160deg,#f0fdf4 0%,#ffffff 60%)}
+.pay-card.s-other{border-left-color:#94a3b8;background:linear-gradient(160deg,#f8fafc 0%,#ffffff 60%)}
 .pay-cb{width:16px;height:16px;accent-color:var(--blue);cursor:pointer;flex-shrink:0;display:none}
 .pay-select .pay-cb{display:block}
 .pay-info{flex:1;min-width:0}
-.pay-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.pay-name{font-family:var(--fh);font-size:15px;font-weight:700;color:var(--text);margin-bottom:9px;display:flex;align-items:center;gap:10px;letter-spacing:-.2px}
 .pay-name i{font-size:12px;color:var(--blue);opacity:.7}
-.pay-card.s-cash .pay-name i{color:var(--green)}
-.pay-card.s-online .pay-name i{color:#8b5cf6}
-.pay-card.s-out .pay-name i{color:var(--red)}
-.pay-details{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-.pay-amt{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:5px}
-.pay-amt i{font-size:11px;color:var(--muted)}
-.pay-month{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:5px}
-.pay-month i{font-size:11px;opacity:.7}
+.pay-card .pay-name{margin-bottom:9px;gap:10px}
+.pay-card .pay-name i{width:30px;height:30px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;background:linear-gradient(135deg,var(--blue),var(--navy));border-radius:50%;opacity:1;box-shadow:0 3px 8px rgba(37,99,235,.3)}
+.pay-card.s-cash .pay-name i{background:linear-gradient(135deg,#10b981,#047857);box-shadow:0 3px 8px rgba(16,185,129,.3)}
+.pay-card.s-online .pay-name i{background:linear-gradient(135deg,#8b5cf6,#6d28d9);box-shadow:0 3px 8px rgba(139,92,246,.3)}
+.pay-card.s-out .pay-name i{background:linear-gradient(135deg,#ef4444,#b91c1c);box-shadow:0 3px 8px rgba(239,68,68,.3)}
+.pay-card.s-prog .pay-name i{background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 3px 8px rgba(245,158,11,.3)}
+.pay-card.s-done .pay-name i{background:linear-gradient(135deg,#10b981,#047857);box-shadow:0 3px 8px rgba(16,185,129,.3)}
+.pay-card.s-other .pay-name i{background:linear-gradient(135deg,#94a3b8,#64748b);box-shadow:0 3px 8px rgba(100,116,139,.3)}
+.pay-details{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pay-amt{font-size:13px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:6px;background:rgba(30,58,95,.06);padding:4px 10px;border-radius:8px}
+.pay-amt i{font-size:11px;color:var(--blue);opacity:1}
+.pay-month{font-size:12px;font-weight:500;color:var(--muted);display:flex;align-items:center;gap:6px;background:#f1f5f9;padding:4px 10px;border-radius:8px}
+.pay-month i{font-size:11px;opacity:.8;color:var(--muted)}
 .pay-right{display:flex;align-items:center;flex-shrink:0}
-.pay-card .sb{padding:4px 12px;font-size:11px;font-weight:500;letter-spacing:.3px}
+.pay-card .sb,.rem-card .sb{padding:5px 13px;font-size:11px;font-weight:700;letter-spacing:.3px;box-shadow:0 2px 6px rgba(30,58,95,.10)}
 .sel-all-pill{background:var(--blue)!important;color:#fff!important;border-color:var(--blue)!important;cursor:pointer}
 .sel-all-pill:hover{background:#1d4ed8!important}
 .sel-all-pill.active{background:var(--red)!important;border-color:var(--red)!important}
@@ -262,8 +289,7 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
 .expiry-ok{background:#d1fae5;color:#065f46;}
 .expiry-mid{background:#dbeafe;color:#1e40af;}
 .expiry-warn{background:#fef3c7;color:#92400e;}
-.expiry-danger{background:#fee2e2;color:#991b1b;animation:pulse 1.5s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.expiry-danger{background:#fee2e2;color:#991b1b;}
 
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -278,12 +304,57 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
 
 <div class="mbk" id="cbk">
   <div class="cmodal">
-    <div class="cicon"><i class="fas fa-triangle-exclamation"></i></div>
+    <div class="cicon" id="c-icon"><i class="fas fa-triangle-exclamation"></i></div>
     <div class="ctitle" id="c-title">Delete?</div>
     <div class="cdesc"  id="c-desc">This cannot be undone.</div>
     <div class="cact">
       <button class="btn btn-g" onclick="closeConfirm()">Cancel</button>
       <button class="btn btn-d" id="c-ok"><i class="fas fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbk" id="pbk" style="z-index:350">
+  <div class="cmodal" style="max-width:330px">
+    <div class="cicon" style="color:var(--navy)"><i class="fas fa-lock"></i></div>
+    <div class="ctitle">Password Required</div>
+    <div class="cdesc" id="p-desc">Enter password to continue.</div>
+    <input type="password" id="p-input" class="finput" style="text-align:center;letter-spacing:6px;font-size:20px" placeholder="•••" autocomplete="off" onkeydown="if(event.key==='Enter'){event.preventDefault();submitPassword()}">
+    <div id="p-err" class="hidden" style="margin-top:10px;font-size:12px;font-weight:700;color:var(--red)">Wrong password. Try again.</div>
+    <div class="cact" style="margin-top:18px">
+      <button class="btn btn-g" onclick="closePassword()">Cancel</button>
+      <button class="btn btn-p" onclick="submitPassword()"><i class="fas fa-unlock"></i> Confirm</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbk" id="pwchbk" style="z-index:360">
+  <div class="cmodal" style="max-width:340px;text-align:left">
+    <div class="ctitle" style="margin-bottom:4px">Change Password</div>
+    <div class="cdesc" style="margin-bottom:14px">Enter your current password to set a new one.</div>
+    <div class="fg" style="margin-bottom:10px"><label>Current Password</label><input type="password" id="pwc-cur" class="finput" autocomplete="off"></div>
+    <div class="fg" style="margin-bottom:10px"><label>New Password (min 3 chars)</label><input type="password" id="pwc-new" class="finput" autocomplete="off"></div>
+    <div class="fg" style="margin-bottom:6px"><label>Confirm New Password</label><input type="password" id="pwc-cnf" class="finput" autocomplete="off"></div>
+    <div id="pwc-err" class="hidden" style="margin-top:8px;font-size:12px;font-weight:700;color:var(--red)"></div>
+    <div class="cact" style="margin-top:16px">
+      <button class="btn btn-g" onclick="closeChangePassword()">Cancel</button>
+      <button class="btn btn-p" onclick="saveNewPassword()"><i class="fas fa-key"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbk" id="histbk">
+  <div class="modal" style="max-width:520px">
+    <div class="mhd">
+      <span class="mtitle" id="hist-title">Customer History</span>
+      <button class="mclose" onclick="closeHistory()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div id="hist-body"></div>
+    </div>
+    <div class="mft">
+      <button type="button" class="btn btn-g" id="hist-wa" onclick="shareHistoryWA()" style="flex:1;justify-content:center;color:#16a34a"><i class="fa-brands fa-whatsapp"></i> WhatsApp</button>
+      <button type="button" class="btn btn-g" onclick="closeHistory()" style="flex:1;justify-content:center">Close</button>
     </div>
   </div>
 </div>
@@ -320,11 +391,47 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
   </div>
 </div>
 
+<div class="mbk" id="remdetailbk">
+  <div class="modal" style="max-width:460px">
+    <div class="mhd">
+      <span class="mtitle" id="rd-title">Reminder Details</span>
+      <button class="mclose" onclick="closeReminderDetail()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="rd-grid" id="rd-grid"></div>
+      <div id="rd-dates"></div>
+    </div>
+    <div class="mft">
+      <button type="button" class="btn btn-p" id="rd-edit" onclick="rdEdit()" style="flex:1;justify-content:center"><i class="fas fa-pen"></i> Edit</button>
+      <button type="button" class="btn btn-d" id="rd-del" onclick="rdDelete()"><i class="fas fa-trash"></i></button>
+      <button type="button" class="btn btn-g" onclick="closeReminderDetail()" style="flex:1;justify-content:center">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="mbk" id="archdetailbk">
+  <div class="modal" style="max-width:460px">
+    <div class="mhd">
+      <span class="mtitle" id="ad-title">Archived Record</span>
+      <button class="mclose" onclick="closeArchiveDetail()">&times;</button>
+    </div>
+    <div class="mbody">
+      <div class="rd-grid" id="ad-grid"></div>
+    </div>
+    <div class="mft">
+      <button type="button" class="btn btn-p" onclick="adRestore()" style="flex:1;justify-content:center"><i class="fas fa-rotate-left"></i> Restore</button>
+      <button type="button" class="btn btn-p" onclick="adEdit()" style="flex:1;justify-content:center"><i class="fas fa-pen"></i> Edit</button>
+      <button type="button" class="btn btn-d" onclick="adDelete()"><i class="fas fa-trash"></i></button>
+      <button type="button" class="btn btn-g" onclick="closeArchiveDetail()" style="flex:1;justify-content:center">Close</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
   <header class="header">
     <div class="hbrand">
       <div class="hicon"><i class="fas fa-chart-bar"></i></div>
-      <div><div class="htitle">DOP Tracker</div><div class="hsub">Agent Portal Utility</div></div>
+      <div><div class="htitle">DOP Tracker <span id="sync-dot" class="sync-dot sync-pending" title="Syncing…"></span></div><div class="hsub">Agent Portal Utility</div></div>
     </div>
     <nav class="dtabs">
       <button class="dtab active" data-tab="home"      onclick="switchTab('home')"><i class="fas fa-house"></i> Home</button>
@@ -362,8 +469,21 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
         </div>
       </div>
       <div class="home-rec">
-        <div class="rec-head"><span class="rec-title">Recent Activity</span></div>
+        <div class="rec-head">
+          <span class="rec-title">Recent Activity</span>
+        </div>
         <div id="rec-list" class="rec-list"></div>
+      </div>
+      <div class="home-backup">
+        <div class="backup-info">
+          <div class="rec-title">Backup &amp; Restore</div>
+          <div class="backup-sub">Export full data or import backup file</div>
+        </div>
+        <div class="backup-actions">
+          <button class="btn btn-g" onclick="askPassword('Enter password to export backup.', exportAllData)" style="color:var(--blue);border-color:#bfdbfe"><i class="fas fa-file-export"></i> Export</button>
+          <button class="btn btn-g" onclick="askPassword('Enter password to import backup.', importAllData)" style="color:#16a34a;border-color:#bbf7d0"><i class="fas fa-file-import"></i> Import</button>
+          <button class="btn btn-g" onclick="openChangePassword()" style="color:var(--muted)" title="Change password"><i class="fas fa-key"></i> Password</button>
+        </div>
       </div>
     </div>
 
@@ -379,16 +499,15 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
         <div class="sw"><i class="fas fa-magnifying-glass"></i>
           <input class="sinput" id="s-payments" type="text" placeholder="Search payments…" oninput="filterTable('payments')">
         </div>
-        <button class="btn btn-d hidden" id="bulk-payments" onclick="confirmBulk('payments')"><i class="fas fa-trash"></i> Delete</button>
         <button class="btn btn-d hidden" id="archive-payments" onclick="archiveSelectedPayments()" style="background:#fef3c7;color:#d97706;border:1px solid #fde68a"><i class="fas fa-box-archive"></i> Archive</button>
         <button class="btn btn-g" id="select-payments" onclick="toggleSelectMode('payments')"><i class="fas fa-check-double"></i> Select</button>
         <button class="btn btn-p" onclick="openModal('payments')"><i class="fas fa-plus"></i> New</button>
       </div>
       <div class="filter-pills" id="fs-payments">
-        <span class="pill active" onclick="setStatusFilter('payments','all')">All</span>
-        <span class="pill" onclick="setStatusFilter('payments','Cash')"><i class="fas fa-money-bill-wave"></i> Cash</span>
-        <span class="pill" onclick="setStatusFilter('payments','Online')"><i class="fas fa-globe"></i> Online</span>
-        <span class="pill" onclick="setStatusFilter('payments','Out')"><i class="fas fa-arrow-right-from-bracket"></i> Out</span>
+        <span class="pill active" data-status="all" onclick="setStatusFilter('payments','all')">All</span>
+        <span class="pill" data-status="Cash" onclick="setStatusFilter('payments','Cash')"><i class="fas fa-money-bill-wave"></i> Cash</span>
+        <span class="pill" data-status="Online" onclick="setStatusFilter('payments','Online')"><i class="fas fa-globe"></i> Online</span>
+        <span class="pill" data-status="Out" onclick="setStatusFilter('payments','Out')"><i class="fas fa-arrow-right-from-bracket"></i> Out</span>
       </div>
       <div class="filter-pills hidden" id="select-bar-payments">
         <span class="pill sel-all-pill" onclick="toggleAll('payments')"><i class="fas fa-check-double"></i> Select All</span>
@@ -411,6 +530,13 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
         <button class="btn btn-d hidden" id="bulk-formality" onclick="confirmBulk('formality')"><i class="fas fa-trash"></i> Delete</button>
         <button class="btn btn-g" id="select-formality" onclick="toggleSelectMode('formality')"><i class="fas fa-check-double"></i> Select</button>
         <button class="btn btn-p" onclick="openModal('formality')"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="filter-pills" id="fs-formality">
+        <span class="pill active" data-status="all" onclick="setStatusFilter('formality','all')">All</span>
+        <span class="pill" data-status="In-Progress" onclick="setStatusFilter('formality','In-Progress')"><i class="fas fa-spinner"></i> In-Progress</span>
+        <span class="pill" data-status="Collected" onclick="setStatusFilter('formality','Collected')"><i class="fas fa-circle-check"></i> Collected</span>
+        <span class="pill" data-status="Expected" onclick="setStatusFilter('formality','Expected')"><i class="fas fa-clock"></i> Expected</span>
+        <span class="pill" data-status="others" onclick="setStatusFilter('formality','others')"><i class="fas fa-layer-group"></i> Others</span>
       </div>
       <div class="filter-pills hidden" id="select-bar-formality">
         <span class="pill sel-all-pill" onclick="toggleAll('formality')"><i class="fas fa-check-double"></i> Select All</span>
@@ -447,8 +573,18 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
           <div class="sec-sub">Drag to reorder reminder records</div>
         </div>
       </div>
+      <div class="tsummary" id="sum-reminder"></div>
       <div class="toolbar">
+        <div class="sw"><i class="fas fa-magnifying-glass"></i>
+          <input class="sinput" id="s-reminder" type="text" placeholder="Search reminders…" oninput="renderReminder()">
+        </div>
+        <button class="btn btn-d hidden" id="bulk-reminder" onclick="confirmBulk('reminder')"><i class="fas fa-trash"></i> Delete</button>
+        <button class="btn btn-g" id="select-reminder" onclick="toggleSelectMode('reminder')"><i class="fas fa-check-double"></i> Select</button>
+        <button class="btn btn-g" onclick="askPassword('Enter password to import reminders.', importRemindersExcel)" style="color:#16a34a;border-color:#bbf7d0"><i class="fas fa-file-excel"></i> Import</button>
         <button class="btn btn-p" onclick="openReminderModal()"><i class="fas fa-plus"></i> New</button>
+      </div>
+      <div class="filter-pills hidden" id="select-bar-reminder">
+        <span class="pill sel-all-pill" onclick="toggleAll('reminder')"><i class="fas fa-check-double"></i> Select All</span>
       </div>
       <div id="rem-list" class="rem-list"></div>
     </div>
@@ -495,6 +631,10 @@ tbody tr:nth-child(even):hover td{background:#f1f5f9}
   <option value="Mobile No. Remain">
 </datalist>
 
+<datalist id="remnames"></datalist>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
 <script>
 // ── helpers ──────────────────────────────────────────────────────────────────
 function normaliseSection(val) {
@@ -529,13 +669,119 @@ function saveDB(data) {
   data.payments  = normaliseSection(data.payments);
   data.formality = normaliseSection(data.formality);
   data['default']= normaliseSection(data['default']);
-  data.reminder  = normaliseSection(data.reminder);
+  data.reminder  = sortPaidLast(normaliseSection(data.reminder));
   data.archive   = normaliseSection(data.archive);
+  ensureIds(data.payments);
+  ensureIds(data.formality);
+  ensureIds(data['default']);
+  ensureIds(data.reminder);
+  ensureIds(data.archive);
   localStorage.setItem('dop_db', JSON.stringify(data));
-  if (typeof window.pushToFirebase === 'function') window.pushToFirebase(data);
+  if (window.__cloudSchedulePush) { try { window.__cloudSchedulePush(); } catch (e) {} }
 }
 
-// Called by Firebase listener after remote update
+// Stable per-record id used only for cloud sync identity (never shown in UI)
+function ensureIds(arr) {
+  (arr || []).forEach(r => {
+    if (r && !r._rid) r._rid = 'r_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+  });
+}
+
+// Delete tombstones: {_rid: deletedAt} — lets deletes propagate accurately
+function loadTomb() {
+  try { return JSON.parse(localStorage.getItem('dop_tomb') || '{}') || {}; }
+  catch (e) { return {}; }
+}
+
+function noteTombstones(recs) {
+  if (!recs) return;
+  const list = Array.isArray(recs) ? recs : [recs];
+  const ids = list.map(r => r && r._rid).filter(Boolean);
+  if (!ids.length) return;
+  try {
+    const t = loadTomb();
+    const now = Date.now();
+    ids.forEach(id => { t[id] = now; });
+    localStorage.setItem('dop_tomb', JSON.stringify(t));
+  } catch (e) {}
+}
+
+// ── cloud merge: union by _rid, last-write-wins, tombstones win ─────────────
+function mergeSection(localArr, cloudArr, tomb) {
+  localArr = localArr || [];
+  cloudArr = cloudArr || [];
+  const map = new Map();
+  const noIdLocal = [];
+  localArr.forEach(r => {
+    if (r && r._rid) map.set(r._rid, r);
+    else if (r) noIdLocal.push(r);
+  });
+  const knownJson = new Set([...map.values(), ...noIdLocal].map(r => {
+    try { return JSON.stringify(r); } catch (e) { return ''; }
+  }));
+  let changed = false;
+  cloudArr.forEach(r => {
+    if (!r) return;
+    if (!r._rid) {
+      let js = '';
+      try { js = JSON.stringify(r); } catch (e) {}
+      if (knownJson.has(js)) return;
+      noIdLocal.push(r);
+      knownJson.add(js);
+      changed = true;
+      return;
+    }
+    if (tomb[r._rid]) {
+      if (map.has(r._rid)) { map.delete(r._rid); changed = true; }
+      return;
+    }
+    const cur = map.get(r._rid);
+    if (!cur) { map.set(r._rid, r); changed = true; return; }
+    const ct = new Date(cur.updatedAt || cur.createdAt || 0).getTime() || 0;
+    const nt = new Date(r.updatedAt || r.createdAt || 0).getTime() || 0;
+    if (nt > ct) { map.set(r._rid, r); changed = true; }
+  });
+  [...map.keys()].forEach(k => { if (tomb[k]) { map.delete(k); changed = true; } });
+  return { arr: [...map.values(), ...noIdLocal], changed };
+}
+
+function sortMerged(sec, arr) {
+  const copy = (arr || []).slice();
+  if (sec === 'reminder') return copy; // manual drag order preserved
+  if (sec === 'archive') {
+    const a = r => (r.archivedAt ? new Date(r.archivedAt).getTime() : 0) || 0;
+    copy.sort((x, y) => a(y) - a(x));
+  } else {
+    const c = r => (r.createdAt ? new Date(r.createdAt).getTime() : 0) || 0;
+    copy.sort((x, y) => c(y) - c(x));
+  }
+  return copy;
+}
+
+function mergeCloudData(cloud) {
+  if (!cloud || !cloud.sections || typeof cloud.sections !== 'object') return false;
+  const local = loadDB();
+  const lt = loadTomb();
+  const ct = (cloud.tomb && typeof cloud.tomb === 'object') ? cloud.tomb : {};
+  const tomb = Object.assign({}, lt);
+  Object.keys(ct).forEach(k => { tomb[k] = Math.max(tomb[k] || 0, ct[k] || 0); });
+  const secs = ['payments', 'formality', 'default', 'reminder', 'archive'];
+  const merged = {};
+  let changed = JSON.stringify(tomb) !== JSON.stringify(lt);
+  secs.forEach(sec => {
+    const res = mergeSection(local[sec] || [], cloud.sections[sec] || [], tomb);
+    const sorted = sortMerged(sec, res.arr);
+    merged[sec] = sorted;
+    try {
+      if (JSON.stringify(sorted) !== JSON.stringify(local[sec] || [])) changed = true;
+    } catch (e) { changed = true; }
+  });
+  if (!changed) return false;
+  try { localStorage.setItem('dop_tomb', JSON.stringify(tomb)); } catch (e) {}
+  saveDB({ payments: merged.payments, formality: merged.formality, 'default': merged.default, reminder: merged.reminder, archive: merged.archive });
+  return true;
+}
+
 window.refreshUI = function () {
   if (currentTab === 'home') {
     renderHome();
@@ -554,7 +800,17 @@ const CFG = {
     cols:  ['Name','Amount','Month','Status'],
     keys:  ['name','amount','month','status'],
     fields:[
-      {name:'name',  label:'Name',               type:'text'},
+      {name:'name',  label:'Name',               type:'datalist', list:'remnames', required:true, placeholder:'Type or pick from Reminder list…'},
+      {name:'amount',label:'Amount (₹)',          type:'text', format:true},
+      {name:'month', label:'Month (e.g. Jan 25)', type:'text'},
+      {name:'status',label:'Status', type:'select', options:['Cash','Online','Out']}
+    ]
+  },
+  archive: {
+    cols:  ['Name','Amount','Month','Status'],
+    keys:  ['name','amount','month','status'],
+    fields:[
+      {name:'name',  label:'Name',               type:'datalist', list:'remnames', required:true, placeholder:'Type or pick from Reminder list…'},
       {name:'amount',label:'Amount (₹)',          type:'text', format:true},
       {name:'month', label:'Month (e.g. Jan 25)', type:'text'},
       {name:'status',label:'Status', type:'select', options:['Cash','Online','Out']}
@@ -620,19 +876,18 @@ function setDateSort(tab, mode) {
 
 function setStatusFilter(tab, status) {
   statusFilter[tab] = status;
-  const pills = document.querySelectorAll('#fs-' + tab + ' .pill');
-  pills.forEach(p => p.classList.remove('active'));
-  const idx = status === 'all' ? 0 : status === 'Cash' ? 1 : status === 'Online' ? 2 : 3;
-  if (pills[idx]) pills[idx].classList.add('active');
+  document.querySelectorAll('#fs-' + tab + ' .pill').forEach(p =>
+    p.classList.toggle('active', (p.dataset.status || 'all') === status)
+  );
   renderTable(tab);
 }
 
-let selectMode = { payments: false, formality: false, 'default': false, archive: false };
+let selectMode = { payments: false, formality: false, 'default': false, archive: false, reminder: false };
 
 function toggleSelectMode(tab) {
   selectMode[tab] = !selectMode[tab];
   const btn = document.getElementById('select-' + tab);
-  const list = document.getElementById('tb-' + tab);
+  const list = document.getElementById(tab === 'reminder' ? 'rem-list' : 'tb-' + tab);
   const selBar = document.getElementById('select-bar-' + tab);
   if (selectMode[tab]) {
     btn.classList.add('active');
@@ -653,6 +908,7 @@ function toggleSelectMode(tab) {
     if (sa) sa.checked = false;
     syncBulk(tab);
   }
+  if (tab === 'reminder') renderReminder();
 }
 
 // ── formatting ───────────────────────────────────────────────────────────────
@@ -677,19 +933,19 @@ function badge(tab, val) {
     if (val === 'Cash')   return `<span class="sb s-cash">Cash</span>`;
     if (val === 'Online') return `<span class="sb s-online">Online</span>`;
     if (val === 'Out')    return `<span class="sb s-out">Out</span>`;
-    return `<span class="sb s-other">${val||'—'}</span>`;
+    return `<span class="sb s-other">${escHtml(val)||'—'}</span>`;
   }
   if (tab === 'formality') {
     if (val === 'Collected')   return `<span class="sb s-done">Collected</span>`;
     if (val === 'In-Progress') return `<span class="sb s-prog">In-Progress</span>`;
-    return `<span class="sb s-other">${val||'—'}</span>`;
+    return `<span class="sb s-other">${escHtml(val)||'—'}</span>`;
   }
   if (tab === 'reminder') {
     if (val === '1st') return `<span class="sb s-online">1st</span>`;
     if (val === '2nd') return `<span class="sb s-prog">2nd</span>`;
-    return `<span class="sb s-other">${val||'—'}</span>`;
+    return `<span class="sb s-other">${escHtml(val)||'—'}</span>`;
   }
-  return val || '—';
+  return escHtml(val) || '—';
 }
 
 // ── tab switching ─────────────────────────────────────────────────────────────
@@ -707,6 +963,9 @@ function switchTab(tab) {
   if (tab === 'home') {
     renderHome();
   } else if (tab === 'reminder') {
+    const si = document.getElementById('s-reminder');
+    if (si) si.value = '';
+    resetMonthlyPaid();
     renderReminder();
   } else if (tab === 'archive') {
     renderArchive();
@@ -749,9 +1008,9 @@ function renderHome() {
       const sub = r._t==='payments'
         ? (r.amount ? '₹'+Number(r.amount).toLocaleString('en-IN') : r.month||'')
         : (r.address||(r.deno ? '₹'+Number(r.deno).toLocaleString('en-IN') : ''));
-      return `<div class="rec-item">
+      return `<div class="rec-item" data-nm="${escAttr(r.name||'')}" onclick="openHistory(this.getAttribute('data-nm'))" style="cursor:pointer">
         <div class="rec-dot" style="background:${dot}"></div>
-        <div><div class="rec-name">${r.name||'—'}</div><div class="rec-sub">${sub}</div></div>
+        <div><div class="rec-name">${escHtml(r.name)||'—'}</div><div class="rec-sub">${escHtml(sub)}</div></div>
         <span class="rec-badge ${bc}">${lbl}</span>
       </div>`;
     }).join('');
@@ -776,7 +1035,12 @@ function renderTable(tab) {
   }
 
   if (statusFilter[tab] && statusFilter[tab] !== 'all') {
-    rows = rows.filter(r => r.status === statusFilter[tab]);
+    const sf = statusFilter[tab];
+    if (sf === 'others') {
+      rows = rows.filter(r => !['In-Progress','Collected','Expected'].includes(r.status));
+    } else {
+      rows = rows.filter(r => r.status === sf);
+    }
   }
 
   if (currentSort.tab===tab && currentSort.key) {
@@ -798,6 +1062,9 @@ function renderTable(tab) {
       const db_ = b[dKey] ? new Date(b[dKey]).getTime() : 0;
       return db_ - da;
     });
+  } else if (tab === 'formality') {
+    const pri = s => s === 'In-Progress' ? 0 : s === 'Collected' ? 1 : s === 'Expected' ? 3 : 2;
+    rows.sort((a,b) => pri(a.status) - pri(b.status));
   }
 
   batchUpdate(() => {
@@ -806,7 +1073,7 @@ function renderTable(tab) {
       const allRows = (db[tab] || []).map((r,i) => ({...r, _idx:i}));
       function amt(r){ return Number((r.amount||'').replace(/,/g,''))||0; }
       function dno(r){ return Number((r.deno||'').replace(/,/g,''))||0; }
-      function sc(n){ return '₹'+Number(n).toLocaleString('en-IN'); }
+      function sc(n){ return '₹ '+Number(n).toLocaleString('en-IN'); }
       function box(cls,lbl,count,amount){
         return `<div class="ts-box ${cls}">
           <div class="ts-lbl">${lbl}</div>
@@ -859,108 +1126,65 @@ function renderTable(tab) {
       return;
     }
 
-    const isDesktop = window.innerWidth > 768;
-
     function cardPayments(row) {
       const statusCls = row.status === 'Cash' ? 's-cash' : row.status === 'Online' ? 's-online' : row.status === 'Out' ? 's-out' : '';
       const amtFmt = row.amount ? Number(row.amount).toLocaleString('en-IN') : '—';
-      const monthFmt = row.month ? fmt('month', row.month) : '—';
+      const monthFmt = row.month ? escHtml(fmt('month', row.month)) : '—';
       return `<div class="pay-card ${statusCls}" onclick="openModal('payments',${row._idx})">
         <input type="checkbox" class="pay-cb ecb-payments" data-i="${row._idx}" onclick="event.stopPropagation();syncBulk('payments')">
         <div class="pay-info">
-          <div class="pay-name"><i class="fas fa-user"></i> ${row.name || '—'}</div>
+          <div class="pay-name"><i class="fas fa-user"></i> <span data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))">${escHtml(row.name) || '—'}</span> <button class="ricn" title="History" data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))"><i class="fas fa-clock-rotate-left"></i></button></div>
           <div class="pay-details">
-            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${amtFmt}</span>
+            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${escHtml(amtFmt)}</span>
             <span class="pay-month"><i class="fas fa-calendar"></i> ${monthFmt}</span>
           </div>
         </div>
         <div class="pay-right">${badge('payments', row.status)}</div>
       </div>`;
     }
-    function rowPayments(row) {
-      const statusCls = row.status === 'Cash' ? 's-cash' : row.status === 'Online' ? 's-online' : row.status === 'Out' ? 's-out' : '';
-      const amtFmt = row.amount ? Number(row.amount).toLocaleString('en-IN') : '—';
-      const monthFmt = row.month ? fmt('month', row.month) : '—';
-      return `<tr onclick="openModal('payments',${row._idx})">
-        <td class="cbc" onclick="event.stopPropagation()"><input type="checkbox" class="rcb ecb-payments" data-i="${row._idx}" onclick="syncBulk('payments')"></td>
-        <td>${row.name || '—'}</td>
-        <td style="font-weight:600">${amtFmt}</td>
-        <td>${monthFmt}</td>
-        <td>${badge('payments', row.status)}</td>
-      </tr>`;
-    }
     function cardFormality(row) {
       const statusCls = row.status === 'Collected' ? 's-done' : row.status === 'In-Progress' ? 's-prog' : 's-other';
-      const denoFmt = row.deno ? '₹' + Number(row.deno).toLocaleString('en-IN') : '—';
+      const denoFmt = row.deno ? Number(row.deno).toLocaleString('en-IN') : '—';
       return `<div class="pay-card ${statusCls}" onclick="openModal('formality',${row._idx})">
         <input type="checkbox" class="pay-cb ecb-formality" data-i="${row._idx}" onclick="event.stopPropagation();syncBulk('formality')">
         <div class="pay-info">
-          <div class="pay-name"><i class="fas fa-user"></i> ${row.name || '—'}</div>
+          <div class="pay-name"><i class="fas fa-user"></i> <span data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))">${escHtml(row.name) || '—'}</span> <button class="ricn" title="History" data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))"><i class="fas fa-clock-rotate-left"></i></button></div>
           <div class="pay-details">
-            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${denoFmt}</span>
-            <span class="pay-month"><i class="fas fa-location-dot"></i> ${row.address || '—'}</span>
+            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${escHtml(denoFmt)}</span>
+            <span class="pay-month"><i class="fas fa-location-dot"></i> ${escHtml(row.address) || '—'}</span>
           </div>
         </div>
         <div class="pay-right">${badge('formality', row.status)}</div>
       </div>`;
     }
-    function rowFormality(row) {
-      const denoFmt = row.deno ? Number(row.deno).toLocaleString('en-IN') : '—';
-      return `<tr onclick="openModal('formality',${row._idx})">
-        <td class="cbc" onclick="event.stopPropagation()"><input type="checkbox" class="rcb ecb-formality" data-i="${row._idx}" onclick="syncBulk('formality')"></td>
-        <td>${row.name || '—'}</td>
-        <td>${row.address || '—'}</td>
-        <td style="font-weight:600">${denoFmt}</td>
-        <td>${badge('formality', row.status)}</td>
-      </tr>`;
-    }
     function cardDefault(row) {
       const daysNum = Number(row.days) || 0;
       const statusCls = daysNum >= 30 ? 's-cash' : daysNum >= 15 ? 's-online' : daysNum > 0 ? 's-prog' : 's-out';
-      const monthFmt = row.month ? fmt('month', row.month) : '—';
-      const denoFmt = row.deno ? '₹' + Number(row.deno).toLocaleString('en-IN') : '—';
+      const monthFmt = row.month ? escHtml(fmt('month', row.month)) : '—';
+      const denoFmt = row.deno ? Number(row.deno).toLocaleString('en-IN') : '—';
       return `<div class="pay-card ${statusCls}" onclick="openModal('default',${row._idx})">
         <input type="checkbox" class="pay-cb ecb-default" data-i="${row._idx}" onclick="event.stopPropagation();syncBulk('default')">
         <div class="pay-info">
-          <div class="pay-name"><i class="fas fa-user"></i> ${row.name || '—'}</div>
+          <div class="pay-name"><i class="fas fa-user"></i> <span data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))">${escHtml(row.name) || '—'}</span> <button class="ricn" title="History" data-nm="${escAttr(row.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))"><i class="fas fa-clock-rotate-left"></i></button></div>
           <div class="pay-details">
             <span class="pay-amt"><i class="fas fa-calendar-days"></i> ${daysNum} days</span>
             <span class="pay-month"><i class="fas fa-calendar"></i> ${monthFmt}</span>
-            <span class="pay-month"><i class="fas fa-indian-rupee-sign"></i> ${denoFmt}</span>
+            <span class="pay-month"><i class="fas fa-indian-rupee-sign"></i> ${escHtml(denoFmt)}</span>
           </div>
         </div>
-        <div class="pay-right"><span class="sb s-prog">${row.address || '—'}</span></div>
+        <div class="pay-right"><span class="sb s-prog">${escHtml(row.address) || '—'}</span></div>
       </div>`;
-    }
-    function rowDefault(row) {
-      const daysNum = Number(row.days) || 0;
-      const monthFmt = row.month ? fmt('month', row.month) : '—';
-      const denoFmt = row.deno ? Number(row.deno).toLocaleString('en-IN') : '—';
-      return `<tr onclick="openModal('default',${row._idx})">
-        <td class="cbc" onclick="event.stopPropagation()"><input type="checkbox" class="rcb ecb-default" data-i="${row._idx}" onclick="syncBulk('default')"></td>
-        <td>${row.name || '—'}</td>
-        <td>${monthFmt}</td>
-        <td style="font-weight:700">${daysNum}</td>
-        <td style="font-weight:600">${denoFmt}</td>
-        <td>${row.address || '—'}</td>
-      </tr>`;
     }
 
     if (tab === 'payments') {
       const cards = rows.map(cardPayments).join('');
-      const tableRows = rows.map(rowPayments).join('');
-      const thead = `<tr><th class="cbc"><input type="checkbox" class="rcb" onclick="toggleAll('payments',this)"></th><th>Name</th><th>Amount</th><th>Month</th><th>Status</th></tr>`;
-      body.innerHTML = `<div class="mobile-view">${cards}</div><div class="desktop-view"><div class="tbox"><div class="twrap"><table><thead>${thead}</thead><tbody>${tableRows}</tbody></table></div></div></div>`;
+      body.innerHTML = `<div class="mobile-view">${cards}</div>`;
     } else if (tab === 'formality') {
       const cards = rows.map(cardFormality).join('');
-      const tableRows = rows.map(rowFormality).join('');
-      const thead = `<tr><th class="cbc"><input type="checkbox" class="rcb" onclick="toggleAll('formality',this)"></th><th>Name</th><th>Address</th><th>Deno</th><th>Status</th></tr>`;
-      body.innerHTML = `<div class="mobile-view">${cards}</div><div class="desktop-view"><div class="tbox"><div class="twrap"><table><thead>${thead}</thead><tbody>${tableRows}</tbody></table></div></div></div>`;
+      body.innerHTML = `<div class="mobile-view">${cards}</div>`;
     } else if (tab === 'default') {
       const cards = rows.map(cardDefault).join('');
-      const tableRows = rows.map(rowDefault).join('');
-      const thead = `<tr><th class="cbc"><input type="checkbox" class="rcb" onclick="toggleAll('default',this)"></th><th>Name</th><th>Month</th><th>Days</th><th>Deno</th><th>Address</th></tr>`;
-      body.innerHTML = `<div class="mobile-view">${cards}</div><div class="desktop-view"><div class="tbox"><div class="twrap"><table><thead>${thead}</thead><tbody>${tableRows}</tbody></table></div></div></div>`;
+      body.innerHTML = `<div class="mobile-view">${cards}</div>`;
     }
 
     syncBulk(tab);
@@ -970,6 +1194,13 @@ function renderTable(tab) {
 function filterTable(tab) { renderTable(tab); }
 
 // ── bulk / checkbox ───────────────────────────────────────────────────────────
+function ecbIdx(tab, onlyChecked) {
+  const sel = `.ecb-${tab}` + (onlyChecked ? ':checked' : '');
+  const seen = new Set();
+  document.querySelectorAll(sel).forEach(cb => seen.add(cb.dataset.i));
+  return [...seen].map(Number);
+}
+
 function toggleAll(tab, master) {
   const cbs = document.querySelectorAll(`.ecb-${tab}`);
   const pill = document.querySelector(`#select-bar-${tab} .sel-all-pill`);
@@ -987,8 +1218,8 @@ function toggleAll(tab, master) {
 }
 
 function syncBulk(tab) {
-  const checked = document.querySelectorAll(`.ecb-${tab}:checked`).length;
-  const total   = document.querySelectorAll(`.ecb-${tab}`).length;
+  const checked = ecbIdx(tab, true).length;
+  const total   = ecbIdx(tab, false).length;
   const btn     = document.getElementById('bulk-'+tab);
   if (btn) {
     if (tab === 'archive') {
@@ -1013,20 +1244,13 @@ function syncBulk(tab) {
   }
   const sa = document.getElementById('sa-'+tab);
   if (sa) { sa.checked = total>0 && checked===total; sa.indeterminate = checked>0 && checked<total; }
-  if (tab === 'payments') {
-    const pill = document.querySelector('.sel-all-pill');
-    if (pill) pill.classList.toggle('active', total>0 && checked===total);
-  }
-  if (tab === 'archive') {
-    const pill = document.querySelector('#select-bar-archive .sel-all-pill');
-    if (pill) pill.classList.toggle('active', total>0 && checked===total);
-  }
+  const pill = document.querySelector(`#select-bar-${tab} .sel-all-pill`);
+  if (pill) pill.classList.toggle('active', total>0 && checked===total);
 }
 
 function archiveSelectedPayments() {
-  const boxes = [...document.querySelectorAll('.ecb-payments:checked')];
-  if (!boxes.length) return;
-  const indices = boxes.map(cb => parseInt(cb.dataset.i));
+  const indices = ecbIdx('payments', true);
+  if (!indices.length) return;
   showConfirm('Archive Records?',`Move ${indices.length} payment record${indices.length>1?'s':''} to Archive? They can be restored later.`,()=>{
     archivePayments(indices);
     selectMode.payments = false;
@@ -1040,11 +1264,35 @@ function archiveSelectedPayments() {
 }
 
 // ── modal ─────────────────────────────────────────────────────────────────────
+function escAttr(s) {
+  if (s === '' || s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+function escHtml(s) {
+  if (s === '' || s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+// Fill Payments ▸ Name suggestions from saved Reminder records
+function fillNameSuggestions() {
+  const dl = document.getElementById('remnames');
+  if (!dl) return;
+  const seen = new Set();
+  const names = [];
+  (loadDB().reminder || []).forEach(r => {
+    const n = (r.name || '').trim();
+    if (n && !seen.has(n)) { seen.add(n); names.push(n); }
+  });
+  dl.innerHTML = names.map(n => `<option value="${escAttr(n)}"></option>`).join('');
+}
+
 function openModal(tab, editIdx=-1) {
   const db     = loadDB();
   const c      = CFG[tab];
   const isEdit = editIdx > -1;
   const data   = isEdit ? (db[tab][editIdx]||{}) : {};
+
+  if (tab === 'payments' || tab === 'archive') fillNameSuggestions();
 
   document.getElementById('m-title').textContent = isEdit ? 'Update Entry' : 'Add New Entry';
   document.getElementById('eidx').value           = editIdx;
@@ -1063,10 +1311,10 @@ function openModal(tab, editIdx=-1) {
     if (f.type==='select') {
       inp=`<select name="${f.name}" class="finput sinput-select">${f.options.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
     } else if (f.type==='datalist') {
-      inp=`<input type="text" name="${f.name}" value="${dispVal}" list="${f.list}" class="finput" placeholder="Select or type…">`;
+      inp=`<input type="text" name="${f.name}" value="${escAttr(dispVal)}" list="${f.list}" class="finput" placeholder="${f.placeholder||'Select or type…'}"${f.required?' required':''}>`;
     } else {
       const ev = f.format ? ` oninput="formatNum(event)" inputmode="numeric"` : '';
-      inp=`<input type="${f.type}" name="${f.name}" value="${dispVal}" class="finput" required${ev}>`;
+      inp=`<input type="${f.type}" name="${f.name}" value="${escAttr(dispVal)}" class="finput" required${ev}>`;
     }
     return `<div class="fg"><label>${f.label}</label>${inp}</div>`;
   }).join('');
@@ -1097,24 +1345,118 @@ function saveEntry(e) {
   if (!db[tab]) db[tab] = [];
   const existing = (idx>-1 && db[tab][idx]) ? db[tab][idx] : {};
   const now = new Date().toISOString();
-  const obj = { createdAt: existing.createdAt||now, updatedAt: now };
+  const obj = { ...existing, createdAt: existing.createdAt||now, updatedAt: now };
   fd.forEach((v,k) => {
     obj[k] = ['amount','deno','days'].includes(k) ? v.trim().replace(/,/g,'') : v.trim();
   });
+  if (tab === 'reminder') {
+    if (!obj.id) obj.id = newRemId();
+    const pi = db.payments.findIndex(p => p.remId && p.remId === obj.id);
+    if (pi > -1) { db.payments[pi].name = obj.name || ''; db.payments[pi].updatedAt = now; }
+  }
   if (idx>-1) { db[tab][idx]=obj; showToast('Entry updated ✓'); }
   else        { db[tab].unshift(obj); showToast('Entry added ✓'); }
   saveDB(db);
   closeModal();
   if (tab==='reminder')      renderReminder();
+  else if (tab==='archive')  renderArchive();
   else if (currentTab===tab) renderTable(tab);
   if (currentTab==='home')   renderHome();
 }
 
 // ── confirm / delete ──────────────────────────────────────────────────────────
-function showConfirm(title,desc,onOk) {
+// ── password gate (changeable, stored as hash) ───────────────────────────────
+const DEFAULT_PW = '123';
+function hashPw(s) {
+  s = String(s || '');
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) {
+    const ch = s.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (h2 >>> 0).toString(16) + (h1 >>> 0).toString(16);
+}
+function getPwHash() {
+  try { return localStorage.getItem('dop_pw_hash') || hashPw(DEFAULT_PW); }
+  catch (e) { return hashPw(DEFAULT_PW); }
+}
+function checkPassword(input) { return hashPw((input || '').trim()) === getPwHash(); }
+function setNewPassword(pw) {
+  try { localStorage.setItem('dop_pw_hash', hashPw(pw)); } catch (e) {}
+}
+let pwOnOk = null;
+
+function askPassword(desc, onOk) {
+  pwOnOk = onOk;
+  document.getElementById('p-desc').textContent = desc || 'Enter password to continue.';
+  document.getElementById('p-input').value = '';
+  document.getElementById('p-err').classList.add('hidden');
+  document.getElementById('pbk').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('p-input').focus(), 50);
+}
+
+function closePassword() {
+  document.getElementById('pbk').classList.remove('open');
+  document.body.style.overflow = '';
+  pwOnOk = null;
+}
+
+function submitPassword() {
+  const inp = document.getElementById('p-input');
+  if (checkPassword(inp.value)) {
+    const cb = pwOnOk;
+    closePassword();
+    if (cb) cb();
+  } else {
+    document.getElementById('p-err').classList.remove('hidden');
+    inp.value = '';
+    inp.focus();
+  }
+}
+
+function openChangePassword() {
+  ['pwc-cur','pwc-new','pwc-cnf'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const err = document.getElementById('pwc-err');
+  if (err) { err.classList.add('hidden'); err.textContent = ''; }
+  document.getElementById('pwchbk').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { const el = document.getElementById('pwc-cur'); if (el) el.focus(); }, 50);
+}
+function closeChangePassword() {
+  document.getElementById('pwchbk').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function saveNewPassword() {
+  const cur = (document.getElementById('pwc-cur').value || '').trim();
+  const nw  = (document.getElementById('pwc-new').value || '').trim();
+  const cnf = (document.getElementById('pwc-cnf').value || '').trim();
+  const err = document.getElementById('pwc-err');
+  function fail(m) { err.textContent = m; err.classList.remove('hidden'); }
+  if (!checkPassword(cur)) return fail('Current password is incorrect.');
+  if (nw.length < 3) return fail('New password must be at least 3 characters.');
+  if (nw !== cnf) return fail('New password and confirmation do not match.');
+  setNewPassword(nw);
+  closeChangePassword();
+  showToast('Password changed ✓');
+}
+
+function showConfirm(title, desc, onOk, opts) {
+  opts = opts || {};
+  if (opts.lock) {
+    askPassword(`${title} — ${desc} Enter password to confirm.`, () => onOk());
+    return;
+  }
   document.getElementById('c-title').textContent = title;
   document.getElementById('c-desc').textContent  = desc;
-  document.getElementById('c-ok').onclick = ()=>{ onOk(); closeConfirm(); };
+  document.getElementById('c-icon').innerHTML    = `<i class="fas ${opts.icon || 'fa-triangle-exclamation'}"></i>`;
+  const ok = document.getElementById('c-ok');
+  ok.className = 'btn ' + (opts.okClass || 'btn-d');
+  ok.innerHTML = `<i class="fas ${opts.okIcon || 'fa-trash'}"></i> ${opts.okLabel || 'Delete'}`;
+  ok.onclick = ()=>{ onOk(); closeConfirm(); };
   document.getElementById('cbk').classList.add('open');
   document.body.style.overflow = 'hidden';
 }
@@ -1148,25 +1490,27 @@ function triggerDelete() {
     showConfirm('Delete Record?','This cannot be undone.',()=>{
       const db = loadDB();
       if (!db[tab]) db[tab] = [];
+      noteTombstones(db[tab][idx]);
       db[tab].splice(idx,1);
       saveDB(db);
       if (tab==='reminder')      renderReminder();
+      else if (tab==='archive')  renderArchive();
       else if (currentTab===tab) renderTable(tab);
       if (currentTab==='home')   renderHome();
       showToast('Record deleted',true);
-    });
+    }, {lock:true});
   }
 }
 
 function confirmBulk(tab) {
-  const boxes = [...document.querySelectorAll(`.ecb-${tab}:checked`)];
-  if (!boxes.length) return;
+  const idxs = ecbIdx(tab, true);
+  if (!idxs.length) return;
   if (tab === 'payments') {
     showConfirm(
       'Archive Selected Records?',
-      `Move ${boxes.length} payment record${boxes.length>1?'s':''} to Archive? They can be restored later.`,
+      `Move ${idxs.length} payment record${idxs.length>1?'s':''} to Archive? They can be restored later.`,
       ()=>{
-        archivePayments(boxes.map(cb=>parseInt(cb.dataset.i)));
+        archivePayments(idxs);
         renderTable(tab);
         if (currentTab==='home') renderHome();
       }
@@ -1174,58 +1518,150 @@ function confirmBulk(tab) {
   } else {
     showConfirm(
       'Delete Selected Records?',
-      `Remove ${boxes.length} record${boxes.length>1?'s':''}? This cannot be undone.`,
+      `Remove ${idxs.length} record${idxs.length>1?'s':''}? This cannot be undone.`,
       ()=>{
         const db = loadDB();
-        boxes.map(cb=>parseInt(cb.dataset.i)).sort((a,b)=>b-a).forEach(i=>db[tab].splice(i,1));
+        idxs.sort((a,b)=>b-a).forEach(i=>{ noteTombstones(db[tab][i]); db[tab].splice(i,1); });
         saveDB(db);
-        renderTable(tab);
+        if (tab==='reminder') renderReminder(); else renderTable(tab);
         if (currentTab==='home') renderHome();
-        showToast(`${boxes.length} record${boxes.length>1?'s':''} deleted`,true);
-      }
+        showToast(`${idxs.length} record${idxs.length>1?'s':''} deleted`,true);
+      },
+      {lock:true}
     );
   }
 }
 
 // ── reminder ──────────────────────────────────────────────────────────────────
 let dragSrcIdx = null;
+let remDragGuard = 0;
+
+function remIsPaid(r) {
+  const deno = Number(String(r.deno || '').replace(/,/g, '')) || 0;
+  const rec  = Number(String(r.received || '').replace(/,/g, '')) || 0;
+  return rec > 0 && rec >= deno;
+}
+
+// Fully-paid reminder cards sink to the bottom of the list (order kept stable)
+function sortPaidLast(arr) {
+  const due = [], paid = [];
+  (arr || []).forEach(r => (remIsPaid(r) ? paid : due).push(r));
+  return due.concat(paid);
+}
+
+// ── monthly reset: on the 1st of each month paid cards uncheck + go back to their spot
+function monthKey(d) {
+  d = d instanceof Date ? d : new Date(d);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+
+function resetMonthlyPaid() {
+  const db = loadDB();
+  const nowKey = monthKey(new Date());
+  const list = db.reminder || [];
+  const toReset = [];
+  let changed = false;
+  list.forEach((r, i) => {
+    if (!remIsPaid(r)) return;
+    if (!r.paidOn) { r.paidOn = new Date().toISOString(); changed = true; return; }
+    if (monthKey(r.paidOn) < nowKey)
+      toReset.push({ r, pos: Number.isFinite(+r.prePaidIdx) ? +r.prePaidIdx : i });
+  });
+  if (!toReset.length) { if (changed) saveDB(db); return; }
+  const set = new Set(toReset.map(x => x.r));
+  const rest = list.filter(r => !set.has(r));
+  toReset.sort((a, b) => a.pos - b.pos).forEach(({ r, pos }) => {
+    r.received = 0;
+    delete r.paidOn;
+    delete r.prePaidIdx;
+    rest.splice(Math.max(0, Math.min(pos, rest.length)), 0, r);
+  });
+  db.reminder = rest;
+  saveDB(db);
+  showToast(`New month: ${toReset.length} reminder${toReset.length > 1 ? 's' : ''} unchecked`);
+}
+
+function newRemId() {
+  return 'rm_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+}
 
 function renderReminder() {
   const db   = loadDB();
   const list = document.getElementById('rem-list');
   if (!list) return;
   const items = db.reminder || [];
+  const filter = (((document.getElementById('s-reminder') || {}).value) || '').trim().toLowerCase();
+  let rows = items.map((r, i) => ({ ...r, _idx: i }));
+  if (filter) rows = rows.filter(r => Object.values(r).some(v => (v + '').toLowerCase().includes(filter)));
 
   batchUpdate(() => {
-    if (!items.length) {
-      list.innerHTML = `<div class="rem-empty"><i class="fas fa-bell"></i><p>No reminders yet. Click New to add one.</p></div>`;
+    const sumEl = document.getElementById('sum-reminder');
+    if (sumEl) {
+      const allItems = items;
+      const totalDeno = allItems.reduce((a, r) => a + (Number(String(r.deno || '').replace(/,/g, '')) || 0), 0);
+      sumEl.innerHTML = `
+        <div class="ts-box ts-collect"><div class="ts-lbl">Total A/C</div><div class="ts-row"><span class="ts-count">${allItems.length}</span></div></div>
+        <div class="ts-box ts-cash"><div class="ts-lbl">Total Denomination</div><div class="ts-row"><span class="ts-amt" style="font-size:22px;color:var(--text)">₹ ${Number(totalDeno).toLocaleString('en-IN')}</span></div></div>`;
+    }
+    if (!rows.length) {
+      list.innerHTML = `<div class="rem-empty"><i class="fas fa-bell"></i><p>${
+        filter ? 'No matching reminders.' : 'No reminders yet. Click New to add one.'}</p></div>`;
+      syncBulk('reminder');
       return;
     }
-    list.innerHTML = items.map((r, i) => {
-      const denoFmt = r.deno ? '₹' + Number(r.deno).toLocaleString('en-IN') : '';
+    const canDrag = !filter && !selectMode.reminder;
+    list.innerHTML = rows.map(r => {
+      const i = r._idx;
+      const denoFmt = r.deno ? Number(r.deno).toLocaleString('en-IN') : '';
+      const paid = remIsPaid(r);
+      const drag = canDrag && !paid;
+      const recFmt = r.received ? Number(r.received).toLocaleString('en-IN') : '';
       const statusBadge = r.status === '1st'
         ? `<span class="sb s-online">1st</span>`
         : r.status === '2nd'
         ? `<span class="sb s-prog">2nd</span>`
-        : `<span class="sb s-other">${r.status||'—'}</span>`;
-      return `<div class="rem-card" draggable="true" data-i="${i}"
+        : `<span class="sb s-other">${escHtml(r.status)||'—'}</span>`;
+      const stCls = r.status === '1st' ? 's-online' : r.status === '2nd' ? 's-prog' : 's-other';
+      return `<div class="rem-card ${stCls}${paid ? ' paid' : ''}" ${drag ? 'draggable="true"' : ''} data-i="${i}"
+          onclick="onReminderClick(event,${i})"
           ondragstart="remDragStart(event,${i})"
           ondragover="remDragOver(event)"
           ondragleave="remDragLeave(event)"
           ondrop="remDrop(event,${i})"
           ondragend="remDragEnd(event)">
-        <span class="rh"><i class="fas fa-grip-vertical"></i></span>
-        <div class="rinfo">
-          <div class="rname">${r.name||'—'}</div>
-          <div class="raddr">${r.address||''}</div>
-          ${denoFmt ? `<div class="rdeno">${denoFmt}</div>` : ''}
+        <div class="rem-st">${statusBadge}</div>
+        <input type="checkbox" class="pay-cb ecb-reminder" data-i="${i}" onpointerdown="event.stopPropagation()" onchange="event.stopPropagation();syncBulk('reminder')">
+        <span class="rh" onclick="event.stopPropagation()"><i class="fas fa-grip-vertical"></i></span>
+        <div class="pay-info">
+          <div class="pay-name"><i class="fas fa-user"></i><span class="rem-nm">${escHtml(r.name)||'—'}</span></div>
+          <div class="pay-details">
+            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${escHtml(denoFmt)||'—'}</span>
+            ${r.address ? `<span class="pay-month"><i class="fas fa-location-dot"></i> ${escHtml(r.address)}</span>` : ''}
+            ${recFmt ? `<span class="rem-recv"><i class="fas fa-circle-check"></i> Received ₹${escHtml(recFmt)}</span>` : ''}
+          </div>
         </div>
-        ${statusBadge}
-        <button class="ricn" onclick="editReminder(${i})" title="Edit"><i class="fas fa-pen"></i></button>
-        <button class="ricn" onclick="deleteReminder(${i})" title="Delete" style="color:var(--red)"><i class="fas fa-trash"></i></button>
+        <div class="pay-right">
+          <button class="ricn" title="History" data-nm="${escAttr(r.name||'')}" onclick="event.stopPropagation();openHistory(this.getAttribute('data-nm'))"><i class="fas fa-clock-rotate-left"></i></button>
+          <button class="ricn" title="WhatsApp" style="color:#16a34a" onclick="event.stopPropagation();shareReminderWA(${i})"><i class="fa-brands fa-whatsapp"></i></button>
+          <input type="checkbox" class="rem-tick" ${paid ? 'checked' : ''} title="${paid ? 'Paid' : 'Mark as paid'}"
+            onpointerdown="event.stopPropagation()" onclick="event.stopPropagation();askTogglePaid(this,${i})">
+          ${paid ? `<span class="rem-paid"><i class="fas fa-circle-check"></i> Paid</span>` : ''}
+        </div>
       </div>`;
     }).join('');
+    syncBulk('reminder');
   });
+}
+
+function onReminderClick(e, idx) {
+  if (Date.now() - remDragGuard < 300) return;
+  if (e.target.closest('input,button,.rh')) return;
+  if (selectMode.reminder) {
+    const cb = e.currentTarget.querySelector('.ecb-reminder');
+    if (cb) { cb.checked = !cb.checked; syncBulk('reminder'); }
+    return;
+  }
+  openReminderDetail(idx);
 }
 
 function remDragStart(e, idx) {
@@ -1257,6 +1693,366 @@ function remDrop(e, targetIdx) {
 function remDragEnd(e) {
   e.currentTarget.classList.remove('dragging');
   dragSrcIdx = null;
+  remDragGuard = Date.now();
+}
+
+// ── reminder detail / payment tick ────────────────────────────────────────────
+let rdIdx = -1, rdDeno = 0;
+
+function openReminderDetail(idx) {
+  const db = loadDB();
+  const r = (db.reminder || [])[idx];
+  if (!r) return;
+  rdIdx = idx;
+  rdDeno = Number(String(r.deno || '').replace(/,/g, '')) || 0;
+  const statusBadge = r.status === '1st'
+    ? `<span class="sb s-online">1st</span>`
+    : r.status === '2nd'
+    ? `<span class="sb s-prog">2nd</span>`
+    : `<span class="sb s-other">${escHtml(r.status) || '—'}</span>`;
+  document.getElementById('rd-title').textContent = r.name || 'Reminder Details';
+  document.getElementById('rd-grid').innerHTML = `
+    <div class="rd-item"><div class="rd-lbl">Name</div><div class="rd-val">${escHtml(r.name) || '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Address</div><div class="rd-val">${escHtml(r.address) || '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Denomination</div><div class="rd-val">${rdDeno ? '₹' + rdDeno.toLocaleString('en-IN') : '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Status</div><div class="rd-val">${statusBadge}</div></div>`;
+  const opts = {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'};
+  document.getElementById('rd-dates').innerHTML = `<div class="entry-dates">Added: ${
+      r.createdAt ? new Date(r.createdAt).toLocaleString('en-IN', opts) : '—'} &nbsp;&bull;&nbsp; Updated: ${
+      r.updatedAt ? new Date(r.updatedAt).toLocaleString('en-IN', opts) : '—'}</div>`;
+  document.getElementById('remdetailbk').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+// Card tick → confirmation → fade + move to end (nothing goes to Payments)
+function askTogglePaid(cb, idx) {
+  const r = (loadDB().reminder || [])[idx];
+  if (!r) { cb.checked = false; return; }
+  const paid = remIsPaid(r);
+  const name = r.name || 'This record';
+  cb.checked = paid;   // revert until confirmed
+  const yes = { okLabel: 'Yes', okClass: 'btn-p', okIcon: 'fa-check' };
+  if (!paid) showConfirm('Mark as Paid?',
+    `${name} — card will fade and move to the end of the list.`,
+    () => applyPaid(idx, true), { ...yes, icon: 'fa-circle-check' });
+  else showConfirm('Mark as Pending?',
+    `${name} — card will return to the normal list.`,
+    () => applyPaid(idx, false), { ...yes, icon: 'fa-rotate-left' });
+}
+
+function applyPaid(idx, paid) {
+  const db = loadDB();
+  const r = (db.reminder || [])[idx];
+  if (!r) return;
+  const deno = Number(String(r.deno || '').replace(/,/g, '')) || 0;
+  r.received  = paid ? (deno > 0 ? deno : 1) : 0;
+  r.updatedAt = new Date().toISOString();
+  if (paid) { r.paidOn = new Date().toISOString(); r.prePaidIdx = idx; }
+  else { delete r.paidOn; delete r.prePaidIdx; }
+  saveDB(db);
+  renderReminder();
+  if (currentTab === 'home') renderHome();
+  showToast(paid ? 'Marked as paid ✓' : 'Marked as pending');
+}
+
+function rdDelete() {
+  const idx = rdIdx;
+  closeReminderDetail();
+  deleteReminder(idx);
+}
+
+function rdEdit() {
+  const idx = rdIdx;
+  closeReminderDetail();
+  editReminder(idx);
+}
+
+function closeReminderDetail() {
+  document.getElementById('remdetailbk').classList.remove('open');
+  document.body.style.overflow = '';
+  rdIdx = -1;
+}
+
+// ── customer history + WhatsApp share ───────────────────────────────────────
+let histName = '';
+function collectHistory(name) {
+  const db = loadDB();
+  const nm = (name || '').trim().toLowerCase();
+  if (!nm) return { payments: [], formality: [], def: [], reminder: [], archive: [] };
+  const match = r => ((r.name || '').trim().toLowerCase() === nm);
+  return {
+    payments: (db.payments || []).filter(match),
+    formality: (db.formality || []).filter(match),
+    def: (db['default'] || []).filter(match),
+    reminder: (db.reminder || []).filter(match),
+    archive: (db.archive || []).filter(match)
+  };
+}
+function openHistory(name) {
+  name = (name || '').trim();
+  if (!name) { showToast('Name not found', true); return; }
+  histName = name;
+  const h = collectHistory(name);
+  const total = h.payments.length + h.formality.length + h.def.length + h.reminder.length + h.archive.length;
+  document.getElementById('hist-title').textContent = name;
+  const sec = (title, items, fmtFn) => {
+    if (!items.length) return '';
+    return `<div class="rd-lbl" style="margin:12px 0 6px">${title} (${items.length})</div>` +
+      items.map(fmtFn).join('');
+  };
+  const payRow = r => `<div class="rec-item"><div class="rec-dot" style="background:#2563eb"></div><div><div class="rec-name">${escHtml(r.amount ? '₹' + Number(String(r.amount).replace(/,/g,'')).toLocaleString('en-IN') : (r.month || ''))}</div><div class="rec-sub">${escHtml(r.month || '')} • ${escHtml(r.status || '')}</div></div><span class="rec-badge bb">Payment</span></div>`;
+  const colRow = r => `<div class="rec-item"><div class="rec-dot" style="background:#10b981"></div><div><div class="rec-name">${escHtml(r.deno ? '₹' + Number(String(r.deno).replace(/,/g,'')).toLocaleString('en-IN') : (r.address || ''))}</div><div class="rec-sub">${escHtml(r.address || '')} • ${escHtml(r.status || '')}</div></div><span class="rec-badge bg">Collection</span></div>`;
+  const defRow = r => `<div class="rec-item"><div class="rec-dot" style="background:#f59e0b"></div><div><div class="rec-name">${escHtml(r.days || '0')} days • ${escHtml(r.month || '')}</div><div class="rec-sub">${escHtml(r.address || '')}${r.deno ? ' • ₹' + escHtml(Number(String(r.deno).replace(/,/g,'')).toLocaleString('en-IN')) : ''}</div></div><span class="rec-badge ba">Default</span></div>`;
+  const remRow = r => `<div class="rec-item"><div class="rec-dot" style="background:#8b5cf6"></div><div><div class="rec-name">${escHtml(r.deno ? '₹' + Number(String(r.deno).replace(/,/g,'')).toLocaleString('en-IN') : '')}</div><div class="rec-sub">${escHtml(r.address || '')} • ${escHtml(r.status || '')}${remIsPaid(r) ? ' • Paid' : ''}</div></div><span class="rec-badge" style="background:#ede9fe;color:#6d28d9">Reminder</span></div>`;
+  const archRow = r => `<div class="rec-item"><div class="rec-dot" style="background:#94a3b8"></div><div><div class="rec-name">${escHtml(r.amount ? '₹' + Number(String(r.amount).replace(/,/g,'')).toLocaleString('en-IN') : '')}</div><div class="rec-sub">${escHtml(r.month || '')} • Archived</div></div><span class="rec-badge" style="background:#f1f5f9;color:#475569">Archive</span></div>`;
+  document.getElementById('hist-body').innerHTML = total
+    ? sec('Payments', h.payments, payRow) + sec('Collections', h.formality, colRow) + sec('Defaults', h.def, defRow) + sec('Reminders', h.reminder, remRow) + sec('Archive', h.archive, archRow)
+    : '<div class="empty-home">No records found for this name.</div>';
+  document.getElementById('histbk').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeHistory() {
+  document.getElementById('histbk').classList.remove('open');
+  document.body.style.overflow = '';
+  histName = '';
+}
+function waOpen(text) { window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank'); }
+function shareReminderWA(idx) {
+  const r = (loadDB().reminder || [])[idx];
+  if (!r) return;
+  const deno = r.deno ? '₹' + Number(String(r.deno).replace(/,/g, '')).toLocaleString('en-IN') : '';
+  const msg = `Hello ${r.name || ''}, your payment of ${deno} ${r.address ? '(' + r.address + ')' : ''} is pending. Please pay at the earliest. - DOP Tracker`;
+  waOpen(msg);
+}
+function shareHistoryWA() {
+  if (!histName) return;
+  const h = collectHistory(histName);
+  const lines = [`Customer: ${histName}`];
+  if (h.payments.length) lines.push(`Payments: ${h.payments.length}`);
+  if (h.formality.length) lines.push(`Collections: ${h.formality.length}`);
+  if (h.def.length) lines.push(`Defaults: ${h.def.length}`);
+  if (h.reminder.length) lines.push(`Reminders: ${h.reminder.length}`);
+  const deno = (h.reminder[0] && h.reminder[0].deno) ? '₹' + Number(String(h.reminder[0].deno).replace(/,/g, '')).toLocaleString('en-IN') : '';
+  waOpen(`Hello ${histName}, ${deno ? 'your amount of ' + deno + ' ' : ''}summary: ${lines.slice(1).join(', ') || 'no dues'}. - DOP Tracker`);
+}
+
+// ── reminder excel import ─────────────────────────────────────────────────────
+function cleanNum(v) { return String(v == null ? '' : v).replace(/[^0-9.]/g, ''); }
+function normHeader(k) { return String(k).toLowerCase().replace(/[^a-z0-9]/g, ''); }
+
+function pickCol(row, keys) {
+  for (const k in row) if (keys.includes(normHeader(k))) return row[k];
+  return '';
+}
+
+function parseDelimited(text) {
+  text = String(text).replace(/^\uFEFF/, '');
+  const first = text.split(/\r?\n/)[0] || '';
+  const delim = first.split(';').length > first.split(',').length ? ';' : ',';
+  const rows = []; let row = []; let cell = ''; let q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) {
+      if (c === '"') { if (text[i+1] === '"') { cell += '"'; i++; } else q = false; }
+      else cell += c;
+    } else {
+      if (c === '"') q = true;
+      else if (c === delim) { row.push(cell); cell = ''; }
+      else if (c === '\n') { row.push(cell); rows.push(row); row = []; cell = ''; }
+      else if (c !== '\r') cell += c;
+    }
+  }
+  if (cell !== '' || row.length) { row.push(cell); rows.push(row); }
+  if (!rows.length) return [];
+  const head = rows.shift().map((h, i) => String(h).trim() || ('col' + i));
+  return rows
+    .filter(r => r.some(c => String(c).trim() !== ''))
+    .map(r => { const o = {}; head.forEach((h, i) => o[h] = r[i] !== undefined ? r[i] : ''); return o; });
+}
+
+// Opens the native file dialog safely: the input is attached to the DOM and the
+// dialog is launched after any closing modal overlay has fully painted.
+// (Opening it in the same task as the modal teardown can leave the mouse
+// cursor invisible until the next focus change.)
+function openFilePicker(accept, onFile) {
+  const inp = document.createElement('input');
+  inp.type = 'file';
+  inp.accept = accept;
+  inp.style.position = 'fixed';
+  inp.style.top = '-100px';
+  inp.style.opacity = '0';
+  inp.style.pointerEvents = 'none';
+  document.body.appendChild(inp);
+  let done = false;
+  const cleanup = () => {
+    if (done) return;
+    done = true;
+    window.removeEventListener('focus', onFocus);
+    if (inp.parentNode) inp.parentNode.removeChild(inp);
+    try { if (document.activeElement && document.activeElement.blur) document.activeElement.blur(); } catch (e) {}
+  };
+  const onFocus = () => {
+    // Dialog dismissed (cancel = no file, choose = change event handles it).
+    // Give the change event a tick to run first.
+    setTimeout(() => { if (!inp.files || !inp.files.length) cleanup(); }, 300);
+  };
+  window.addEventListener('focus', onFocus);
+  inp.onchange = () => {
+    const file = inp.files && inp.files[0];
+    cleanup();
+    if (file) onFile(file);
+  };
+  setTimeout(() => { if (!done) inp.click(); }, 120);
+}
+
+function importRemindersExcel() {
+  openFilePicker('.xlsx,.xls,.csv', (file) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      let rows = [];
+      try {
+        if (typeof XLSX !== 'undefined') {
+          const wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array' });
+          rows = XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], { defval: '' });
+        } else {
+          rows = parseDelimited(new TextDecoder().decode(new Uint8Array(ev.target.result)));
+        }
+      } catch (err) {
+        console.error(err);
+        showToast('Could not read file', true);
+        return;
+      }
+      importReminderRows(rows);
+    };
+    reader.onerror = () => showToast('Could not read file', true);
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+function importReminderRows(rows) {
+  const NAME_KEYS = ['name','customername','membername','holdername','accountname'];
+  const ADDR_KEYS = ['address','addr','location','place'];
+  const DENO_KEYS = ['deno','denomination','amount','total','deposit','due'];
+  const STAT_KEYS = ['status','reminderstatus','reminder','type'];
+  const RECV_KEYS = ['paymentreceived','paymentrecv','received','paid','payment'];
+
+  const clean = (rows || []).filter(r => String(pickCol(r, NAME_KEYS)).trim() !== '');
+  if (!clean.length) { showToast('No valid rows found in file', true); return; }
+
+  const db = loadDB();
+  if (!db.reminder) db.reminder = [];
+  const now = new Date().toISOString();
+  let added = 0;
+  clean.forEach(r => {
+    const s = String(pickCol(r, STAT_KEYS)).trim().toLowerCase();
+    let st = '1st';
+    if (s === '2nd' || s === '2' || s.startsWith('2') || s.includes('second')) st = '2nd';
+    db.reminder.push({
+      id      : newRemId(),
+      name    : String(pickCol(r, NAME_KEYS)).trim(),
+      address : String(pickCol(r, ADDR_KEYS)).trim(),
+      deno    : cleanNum(pickCol(r, DENO_KEYS)),
+      status  : st,
+      received: cleanNum(pickCol(r, RECV_KEYS)),
+      createdAt: now,
+      updatedAt: now
+    });
+    added++;
+  });
+  if (!added) { showToast('No valid rows found in file', true); return; }
+  saveDB(db);
+  renderReminder();
+  if (currentTab === 'home') renderHome();
+  showToast(`${added} reminder${added > 1 ? 's' : ''} imported ✓`);
+}
+
+// ── full backup: export / import all data as Excel ───────────────────────────
+const SECTION_NAMES = {
+  payments : 'Payments',
+  formality: 'Collections',
+  'default': 'Default',
+  reminder : 'Reminder',
+  archive  : 'Archive'
+};
+
+function exportAllData() {
+  if (typeof XLSX === 'undefined') { showToast('Excel library not loaded', true); return; }
+  const db = loadDB();
+  const wb = XLSX.utils.book_new();
+  let any = false;
+  Object.keys(SECTION_NAMES).forEach(sec => {
+    const rows = (db[sec] || []).map(r => {
+      const o = {};
+      Object.keys(r).forEach(k => { o[k] = r[k] === undefined || r[k] === null ? '' : r[k]; });
+      return o;
+    });
+    if (rows.length) {
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), SECTION_NAMES[sec]);
+      any = true;
+    }
+  });
+  if (!any) { showToast('No data to export', true); return; }
+  const d = new Date();
+  const fname = `DOP-Backup_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.xlsx`;
+  XLSX.writeFile(wb, fname);
+  showToast('Backup exported ✓');
+}
+
+function importAllData() {
+  openFilePicker('.xlsx,.xls,.csv', (file) => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      let wb;
+      try {
+        wb = XLSX.read(new Uint8Array(ev.target.result), { type: 'array', cellDates: true });
+      } catch (err) {
+        console.error(err);
+        showToast('Could not read file', true);
+        return;
+      }
+      const nameToSec = {};
+      Object.keys(SECTION_NAMES).forEach(sec => { nameToSec[SECTION_NAMES[sec].toLowerCase()] = sec; });
+      const sections = {};
+      let total = 0;
+      wb.SheetNames.forEach(sn => {
+        const sec = nameToSec[String(sn).trim().toLowerCase()];
+        if (!sec) return;
+        let rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], { defval: '', raw: false });
+        rows = rows.filter(r => r && Object.values(r).some(v => String(v).trim() !== ''));
+        rows = rows.map(r => {
+          const o = {};
+          Object.keys(r).forEach(k => {
+            let v = r[k];
+            if (v instanceof Date) v = v.toISOString();
+            o[k] = typeof v === 'string' ? v.trim() : v;
+          });
+          return o;
+        });
+        sections[sec] = rows;
+        total += rows.length;
+      });
+      if (!total) { showToast('No valid data found in file', true); return; }
+      const found = Object.keys(sections).map(s => `${SECTION_NAMES[s]} (${sections[s].length})`).join(', ');
+      showConfirm('Import Backup?',
+        `This will replace current data with: ${found}. Continue?`,
+        () => {
+          const db = loadDB();
+          Object.keys(sections).forEach(sec => {
+            const newIds = new Set((sections[sec] || []).map(r => r && r._rid).filter(Boolean));
+            noteTombstones((db[sec] || []).filter(r => r && r._rid && !newIds.has(r._rid)));
+            db[sec] = sections[sec];
+          });
+          saveDB(db);
+          window.refreshUI();
+          renderHome();
+          showToast(`Imported ${total} records ✓`);
+        },
+        { okLabel: 'Import', okIcon: 'fa-file-import', okClass: 'btn-p' }
+      );
+    };
+    reader.onerror = () => showToast('Could not read file', true);
+    reader.readAsArrayBuffer(file);
+  });
 }
 
 function openReminderModal(editIdx=-1) {
@@ -1286,7 +2082,7 @@ function openReminderModal(editIdx=-1) {
       inp=`<select name="${f.name}" class="finput sinput-select">${f.options.map(o=>`<option${val===o?' selected':''}>${o}</option>`).join('')}</select>`;
     } else {
       const ev = f.format ? ` oninput="formatNum(event)" inputmode="numeric"` : '';
-      inp=`<input type="${f.type}" name="${f.name}" value="${dispVal}" class="finput" required${ev}>`;
+      inp=`<input type="${f.type}" name="${f.name}" value="${escAttr(dispVal)}" class="finput" required${ev}>`;
     }
     return `<div class="fg"><label>${f.label}</label>${inp}</div>`;
   }).join('');
@@ -1307,11 +2103,12 @@ function editReminder(idx)   { openReminderModal(idx); }
 function deleteReminder(idx) {
   showConfirm('Delete Reminder?','This cannot be undone.',()=>{
     const db = loadDB();
+    noteTombstones(db.reminder[idx]);
     db.reminder.splice(idx,1);
     saveDB(db);
     renderReminder();
     showToast('Reminder deleted',true);
-  });
+  }, {lock:true});
 }
 
 // ── archive ──────────────────────────────────────────────────────────────────
@@ -1362,11 +2159,80 @@ function restoreAllArchive() {
 function deleteArchive(idx) {
   showConfirm('Delete Archived Record?','This cannot be undone.',()=>{
     const db = loadDB();
+    noteTombstones(db.archive[idx]);
     db.archive.splice(idx,1);
     saveDB(db);
     renderArchive();
     showToast('Archived record deleted',true);
-  });
+  }, {lock:true});
+}
+
+let adIdx = -1;
+
+function onArchiveClick(e, idx) {
+  if (e.target.closest('input,button')) return;
+  if (selectMode.archive) {
+    const cb = e.currentTarget.querySelector('.ecb-archive');
+    if (cb) { cb.checked = !cb.checked; syncBulk('archive'); }
+    return;
+  }
+  openArchiveDetail(idx);
+}
+
+function openArchiveDetail(idx) {
+  const db = loadDB();
+  const r = (db.archive || [])[idx];
+  if (!r) return;
+  adIdx = idx;
+  const amtFmt = r.amount ? Number(String(r.amount).replace(/,/g, '')).toLocaleString('en-IN') : '';
+  const monthFmt = r.month ? fmt('month', r.month) : '';
+  const archDate = r.archivedAt ? new Date(r.archivedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
+  let expiryStr = '—';
+  if (r.archivedAt) {
+    const ex = new Date(r.archivedAt);
+    ex.setMonth(ex.getMonth() + 6);
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    expiryStr = `${String(ex.getDate()).padStart(2,'0')}-${months[ex.getMonth()]}-${ex.getFullYear()}`;
+  }
+  const dtOpts = {day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'};
+  const addedStr = r.createdAt ? new Date(r.createdAt).toLocaleString('en-IN', dtOpts) : '—';
+  const updatedStr = r.updatedAt ? new Date(r.updatedAt).toLocaleString('en-IN', dtOpts) : '—';
+  document.getElementById('ad-title').textContent = r.name || 'Archived Record';
+  document.getElementById('ad-grid').innerHTML = `
+    <div class="rd-item"><div class="rd-lbl">Name</div><div class="rd-val">${escHtml(r.name) || '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Amount</div><div class="rd-val">${amtFmt ? '₹' + escHtml(amtFmt) : '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Month</div><div class="rd-val">${escHtml(monthFmt) || '—'}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Status</div><div class="rd-val">${badge('payments', r.status)}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Archived On</div><div class="rd-val">${escHtml(archDate)}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Auto-delete On</div><div class="rd-val">${escHtml(expiryStr)}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Added (Payments)</div><div class="rd-val">${escHtml(addedStr)}</div></div>
+    <div class="rd-item"><div class="rd-lbl">Last Updated</div><div class="rd-val">${escHtml(updatedStr)}</div></div>`;
+  document.getElementById('archdetailbk').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeArchiveDetail() {
+  document.getElementById('archdetailbk').classList.remove('open');
+  document.body.style.overflow = '';
+  adIdx = -1;
+}
+
+function adRestore() {
+  const idx = adIdx;
+  closeArchiveDetail();
+  restoreArchive(idx);
+}
+
+function adEdit() {
+  const idx = adIdx;
+  closeArchiveDetail();
+  openModal('archive', idx);
+}
+
+function adDelete() {
+  const idx = adIdx;
+  closeArchiveDetail();
+  deleteArchive(idx);
 }
 
 function confirmBulkArchive() {
@@ -1397,13 +2263,14 @@ function confirmBulkDeleteArchive() {
   showConfirm('Delete Archived Records?',`Permanently delete ${indices.length} record${indices.length>1?'s':''}? This cannot be undone.`,()=>{
     const db = loadDB();
     indices.sort((a,b)=>b-a).forEach(i=>{
+      noteTombstones(db.archive[i]);
       db.archive.splice(i,1);
     });
     saveDB(db);
     renderArchive();
     resetArchiveSelectMode();
     showToast(`${indices.length} record${indices.length>1?'s':''} deleted`,true);
-  });
+  }, {lock:true});
 }
 
 function resetArchiveSelectMode() {
@@ -1432,6 +2299,10 @@ function renderArchive() {
     const f = filter.toLowerCase();
     rows = rows.filter(r=>Object.values(r).some(v=>(v+'').toLowerCase().includes(f)));
   }
+  // newest archive on top
+  rows.sort((a,b) => (b.archivedAt ? new Date(b.archivedAt).getTime() : 0)
+                   - (a.archivedAt ? new Date(a.archivedAt).getTime() : 0)
+                   || b._idx - a._idx);
 
   batchUpdate(() => {
     const sumEl = document.getElementById('sum-archive');
@@ -1439,7 +2310,7 @@ function renderArchive() {
       const total = (db.archive || []).length;
       const totalAmt = (db.archive || []).reduce((a,r) => a + (Number((r.amount||'').replace(/,/g,''))||0), 0);
       sumEl.innerHTML = `
-        <div class="ts-box ts-collect"><div class="ts-lbl">Total Archived</div><div class="ts-row"><span class="ts-count">${total}</span><span class="ts-sep">~</span><span class="ts-amt">₹${Number(totalAmt).toLocaleString('en-IN')}</span></div></div>`;
+        <div class="ts-box ts-collect"><div class="ts-lbl">Total Archived</div><div class="ts-row"><span class="ts-count">${total}</span><span class="ts-sep">~</span><span class="ts-amt">₹ ${Number(totalAmt).toLocaleString('en-IN')}</span></div></div>`;
     }
 
     if (!rows.length) {
@@ -1450,9 +2321,8 @@ function renderArchive() {
     body.innerHTML = rows.map(row => {
       const statusCls = row.status === 'Cash' ? 's-cash' : row.status === 'Online' ? 's-online' : row.status === 'Out' ? 's-out' : '';
       const amtFmt = row.amount ? Number(row.amount).toLocaleString('en-IN') : '—';
-      const monthFmt = row.month ? fmt('month', row.month) : '—';
-      const archDate = row.archivedAt ? new Date(row.archivedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}) : '—';
-      
+      const monthFmt = row.month ? escHtml(fmt('month', row.month)) : '—';
+      const archDate = row.archivedAt ? escHtml(new Date(row.archivedAt).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})) : '—';
       let expiryText = '';
       let expiryCls = 'expiry-ok';
       let expiryDateStr = '';
@@ -1501,18 +2371,18 @@ function renderArchive() {
         }
       }
       
-      return `<div class="pay-card ${statusCls}" style="opacity:0.75">
+      return `<div class="pay-card ${statusCls}" style="opacity:0.75" onclick="onArchiveClick(event,${row._idx})">
         <input type="checkbox" class="pay-cb ecb-archive" data-i="${row._idx}" onclick="event.stopPropagation();syncBulk('archive')">
         <div class="pay-info">
-          <div class="pay-name"><i class="fas fa-user"></i> ${row.name || '—'}</div>
+          <div class="pay-name"><i class="fas fa-user"></i> ${escHtml(row.name) || '—'}</div>
           <div class="pay-details">
-            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${amtFmt}</span>
+            <span class="pay-amt"><i class="fas fa-indian-rupee-sign"></i> ${escHtml(amtFmt)}</span>
             <span class="pay-month"><i class="fas fa-calendar"></i> ${monthFmt}</span>
             <span class="pay-month"><i class="fas fa-box-archive"></i> ${archDate}</span>
           </div>
         </div>
-        <div class="archive-expiry ${expiryCls}" onclick="showExpiryModal('${expiryDateStr}')" style="cursor:pointer">
-          <i class="fas fa-clock"></i> ${expiryText}
+        <div class="archive-expiry ${expiryCls}" onclick="event.stopPropagation();showExpiryModal('${escAttr(expiryDateStr)}')" style="cursor:pointer">
+          <i class="fas fa-clock"></i> ${escHtml(expiryText)}
         </div>
         <div class="pay-right">
           ${badge('payments', row.status)}
@@ -1547,17 +2417,20 @@ function autoArchiveOldRecords() {
   // Auto-delete archived records older than 6 months
   const archive = db.archive || [];
   let deletedCount = 0;
-  db.archive = archive.filter(r => {
+  const keptArchive = [];
+  archive.forEach(r => {
     const archDate = r.archivedAt ? new Date(r.archivedAt) : null;
-    if (!archDate) return true;
+    if (!archDate) { keptArchive.push(r); return; }
     const expiry = new Date(archDate);
     expiry.setMonth(expiry.getMonth() + 6);
     if (now >= expiry) {
       deletedCount++;
-      return false;
+      noteTombstones(r);
+      return;
     }
-    return true;
+    keptArchive.push(r);
   });
+  db.archive = keptArchive;
   if (deletedCount) {
     showToast(`Auto-deleted ${deletedCount} expired archive record${deletedCount>1?'s':''}`, true);
   }
@@ -1580,80 +2453,142 @@ function showToast(msg, isErr=false) {
 // Modals only close via buttons — backdrop click is intentionally disabled
 
 // ── init ──────────────────────────────────────────────────────────────────────
+resetMonthlyPaid();
+(function sinkPaidReminders() {
+  const db = loadDB();
+  const sorted = sortPaidLast(db.reminder);
+  if (sorted.some((r, i) => r !== db.reminder[i])) { db.reminder = sorted; saveDB(db); }
+})();
 autoArchiveOldRecords();
 renderHome();
 </script>
 
 <script type="module">
-  import { initializeApp }  from "https://www.gstatic.com/firebasejs/12.12.1/firebase-app.js";
-  import { getAnalytics }   from "https://www.gstatic.com/firebasejs/12.12.1/firebase-analytics.js";
-  import { getDatabase, ref, set, onValue, get } from "https://www.gstatic.com/firebasejs/12.12.1/firebase-database.js";
+// ── Firebase silent background sync (cache-first) ────────────────────────────
+// Cache-first: the app renders instantly from localStorage. This module pulls
+// the cloud copy in the background, merges it (union by record id,
+// last-write-wins, delete tombstones) and pushes local changes silently.
+// If Firebase is unreachable, the app keeps working fully offline.
+//
+// Realtime Database rules (Firebase console → Realtime Database → Rules):
+//   { "rules": { "dop": { ".read": true, ".write": true } } }
+// Open rules are fine for personal use; add Auth for stricter control.
+const firebaseConfig = {
+  apiKey: "AIzaSyBwHopQvzQPMjvP23zGN9fAI8Z_kkB5mho",
+  authDomain: "dop-tracker.firebaseapp.com",
+  databaseURL: "https://dop-tracker-default-rtdb.firebaseio.com",
+  projectId: "dop-tracker",
+  storageBucket: "dop-tracker.firebasestorage.app",
+  messagingSenderId: "706087515812",
+  appId: "1:706087515812:web:1e7aea36e0b201c48cd831",
+  measurementId: "G-V5R6VN4PEQ"
+};
+const CLOUD_PATH = 'dop/v1/state';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyBwHopQvzQPMjvP23zGN9fAI8Z_kkB5mho",
-    authDomain: "dop-tracker.firebaseapp.com",
-    databaseURL: "https://dop-tracker-default-rtdb.firebaseio.com",
-    projectId: "dop-tracker",
-    storageBucket: "dop-tracker.firebasestorage.app",
-    messagingSenderId: "706087515812",
-    appId: "1:706087515812:web:1e7aea36e0b201c48cd831",
-    measurementId: "G-V5R6VN4PEQ"
+window.__setSyncState = function (s) {
+  const d = document.getElementById('sync-dot');
+  if (!d) return;
+  d.className = 'sync-dot sync-' + s;
+  d.title = s === 'synced' ? 'All data synced'
+    : (s === 'syncing' || s === 'pending') ? 'Syncing…'
+    : 'Offline — changes saved on this device';
+};
+
+(async () => {
+  const setSync = (s) => { try { window.__setSyncState(s); } catch (e) {} };
+  setSync('pending');
+  let initializeApp, getDatabase, ref, get, set, onValue;
+  let app, db;
+  try {
+    const appMod = await import('https://www.gstatic.com/firebasejs/13.0.0/firebase-app.js');
+    const dbMod = await import('https://www.gstatic.com/firebasejs/13.0.0/firebase-database.js');
+    initializeApp = appMod.initializeApp;
+    getDatabase = dbMod.getDatabase; ref = dbMod.ref;
+    get = dbMod.get; set = dbMod.set; onValue = dbMod.onValue;
+    app = initializeApp(firebaseConfig);
+    db = getDatabase(app);
+    try {
+      const anMod = await import('https://www.gstatic.com/firebasejs/13.0.0/firebase-analytics.js');
+      if (anMod.getAnalytics) anMod.getAnalytics(app);
+    } catch (e) {}
+  } catch (e) { setSync('offline'); return; }
+
+  const dbRef = ref(db, CLOUD_PATH);
+  let pushTimer = null;
+  let lastSentRev = null;
+  let lastSentBody = null;
+  try { lastSentBody = localStorage.getItem('dop_lastpush') || null; } catch (e) {}
+
+  const bodyOf = () => {
+    const d = window.loadDB();
+    return JSON.stringify({
+      sections: {
+        payments: d.payments || [],
+        formality: d.formality || [],
+        'default': d['default'] || [],
+        reminder: d.reminder || [],
+        archive: d.archive || []
+      },
+      tomb: window.loadTomb ? window.loadTomb() : {}
+    });
   };
 
-  const app = initializeApp(firebaseConfig);
-  getAnalytics(app);
-  const db    = getDatabase(app);
-  const dbRef = ref(db, 'dop_db');
-
-  let isLocalUpdate = false;
-
-  function normaliseSection(val) {
-    if (!val) return [];
-    if (Array.isArray(val)) return val.filter(Boolean);
-    return Object.values(val).filter(Boolean);
+  async function pushNow() {
+    pushTimer = null;
+    let body = null;
+    try { body = bodyOf(); } catch (e) { return; }
+    if (body === lastSentBody) { setSync('synced'); return; }
+    setSync('syncing');
+    const rev = Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    try {
+      const payload = JSON.parse(body);
+      payload.rev = rev;
+      payload.updatedAt = Date.now();
+      await set(dbRef, payload);
+      lastSentRev = rev;
+      lastSentBody = body;
+      try { localStorage.setItem('dop_lastpush', body); } catch (e) {}
+      setSync('synced');
+    } catch (e) { setSync('offline'); }
   }
 
-  function normaliseDB(data) {
-    return {
-      payments : normaliseSection(data.payments),
-      formality: normaliseSection(data.formality),
-      'default': normaliseSection(data['default']),
-      reminder : normaliseSection(data.reminder),
-      archive  : normaliseSection(data.archive)
-    };
-  }
-
-  window.pushToFirebase = (data) => {
-    isLocalUpdate = true;
-    set(dbRef, data)
-      .then(()=>{ setTimeout(()=>{ isLocalUpdate=false; }, 500); })
-      .catch(err=>console.error("Firebase sync error:", err));
+  window.__cloudSchedulePush = () => {
+    setSync('pending');
+    if (pushTimer) clearTimeout(pushTimer);
+    pushTimer = setTimeout(pushNow, 900);
   };
 
-  // Push any queued data from before Firebase loaded
-  if (window.firebaseDataQueue) {
-    window.pushToFirebase(window.firebaseDataQueue);
-    window.firebaseDataQueue = null;
-  }
-
-  // If Firebase is empty but localStorage has data, push it up
-  get(dbRef).then(snapshot=>{
-    if (!snapshot.exists()) {
-      const local = window.loadDB();
-      if (local.payments.length || local.formality.length || local['default'].length || local.reminder.length || local.archive.length)
-        window.pushToFirebase(local);
+  async function pullAndMerge() {
+    setSync('syncing');
+    let snap = null;
+    try { snap = await get(dbRef); } catch (e) { setSync('offline'); return; }
+    const val = snap && snap.val ? snap.val() : null;
+    if (!val || !val.sections) { pushNow(); return; }
+    if (val.rev && val.rev === lastSentRev) { setSync('synced'); return; }
+    let changed = false;
+    try { changed = window.mergeCloudData(val); } catch (e) { changed = false; }
+    if (changed) {
+      try { window.refreshUI(); } catch (e) {}
+    } else {
+      setSync('synced');
     }
-  }).catch(err=>console.error("Firebase init error:", err));
+  }
 
-  // Listen for remote changes
-  onValue(dbRef, snapshot=>{
-    if (isLocalUpdate) return;
-    const data = snapshot.val();
-    if (!data) return;
-    const safe = normaliseDB(data);
-    localStorage.setItem('dop_db', JSON.stringify(safe));
-    if (typeof window.refreshUI === 'function') window.refreshUI();
-  });
+  try {
+    onValue(dbRef, (snap) => {
+      let val = null;
+      try { val = snap && snap.val ? snap.val() : null; } catch (e) {}
+      if (!val || !val.sections) return;
+      if (val.rev && val.rev === lastSentRev) return;
+      let changed = false;
+      try { changed = window.mergeCloudData(val); } catch (e) {}
+      if (changed) { try { window.refreshUI(); } catch (e) {} }
+    });
+  } catch (e) {}
+
+  await pullAndMerge();
+  window.addEventListener('online', () => { pullAndMerge(); });
+})();
 </script>
 </body>
 </html>
