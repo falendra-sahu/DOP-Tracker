@@ -484,6 +484,7 @@ body{cursor:default}
           <button class="btn btn-g" onclick="askPassword('Enter password to export backup.', exportAllData)" style="color:var(--blue);border-color:#bfdbfe"><i class="fas fa-file-export"></i> Export</button>
           <button class="btn btn-g" onclick="askPassword('Enter password to import backup.', importAllData)" style="color:#16a34a;border-color:#bbf7d0"><i class="fas fa-file-import"></i> Import</button>
           <button class="btn btn-g" onclick="openChangePassword()" style="color:var(--muted)" title="Change password"><i class="fas fa-key"></i> Password</button>
+          <button class="btn btn-d" onclick="eraseAllData()" title="Delete everything on this device and cloud"><i class="fas fa-trash-can"></i> Erase All</button>
         </div>
         <div id="sync-warn" class="hidden" style="flex-basis:100%;margin-top:10px;font-size:12px;font-weight:600;color:#991b1b;background:#fee2e2;border:1px solid #fecaca;border-radius:8px;padding:8px 12px">Cloud sync is blocked — open Firebase console → Realtime Database → Rules, allow read and write for /dop, then reload this page.</div>
       </div>
@@ -2069,6 +2070,23 @@ function importAllData() {
   });
 }
 
+function eraseAllData() {
+  askPassword('Enter password to erase ALL data on this device and cloud.', () => {
+    showConfirm('Erase Everything?',
+      'Delete ALL records on this device AND in the cloud backup? Other devices will be wiped live too. This cannot be undone.',
+      async () => {
+        try { localStorage.removeItem('dop_db'); } catch (e) {}
+        try { localStorage.removeItem('dop_tomb'); } catch (e) {}
+        try { localStorage.removeItem('dop_lastpush'); } catch (e) {}
+        if (window.__cloudWipe) { try { await window.__cloudWipe(); } catch (e) {} }
+        try { window.refreshUI(); } catch (e) {}
+        showToast('All data erased', true);
+      },
+      { okLabel: 'Erase All', okIcon: 'fa-trash-can', okClass: 'btn-d' }
+    );
+  });
+}
+
 function openReminderModal(editIdx=-1) {
   const db     = loadDB();
   const isEdit = editIdx > -1;
@@ -2621,24 +2639,88 @@ window.__setSyncState = function (s) {
     if (needSave && window.saveDB) window.saveDB(d0);
   } catch (e) {}
 
+  // Cloud is the live truth: adopt its state verbatim so every open device
+  // shows exactly the same data within ~a second of any change. The local
+  // cache only ever holds loaded Firebase data — never a divergent copy.
+  function adoptState(val) {
+    const secs = (val && val.sections) || {};
+    const pick = k => Array.isArray(secs[k]) ? secs[k] : [];
+    const data = {
+      payments: pick('payments'),
+      formality: pick('formality'),
+      'default': pick('default'),
+      reminder: pick('reminder'),
+      archive: pick('archive')
+    };
+    try {
+      if (val.tomb && typeof val.tomb === 'object') localStorage.setItem('dop_tomb', JSON.stringify(val.tomb));
+    } catch (e) {}
+    try { window.saveDB(data); } catch (e) {
+      try { localStorage.setItem('dop_db', JSON.stringify(data)); } catch (e2) {}
+    }
+    if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+    try { lastSentBody = bodyOf(); } catch (e) {}
+    lastSentRev = (val && val.rev) || null;
+    try { window.refreshUI(); } catch (e) {}
+    setSync('synced');
+  }
+
+  function adoptErase(val) {
+    try { localStorage.removeItem('dop_db'); } catch (e) {}
+    try { localStorage.removeItem('dop_tomb'); } catch (e) {}
+    try { localStorage.removeItem('dop_lastpush'); } catch (e) {}
+    lastSentBody = null;
+    lastSentRev = (val && val.rev) || 'erased';
+    if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+    try { window.refreshUI(); } catch (e) {}
+    setSync('synced');
+  }
+
+  // Erase this device + cloud (Erase All button). Other open devices adopt
+  // the erase live through the listener.
+  window.__cloudWipe = async () => {
+    lastSentBody = null;
+    lastSentRev = null;
+    if (pushTimer) { clearTimeout(pushTimer); pushTimer = null; }
+    const rev = 'erase_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 9);
+    setSync('syncing');
+    try {
+      await set(dbRef, { erasedAt: Date.now(), rev });
+      lastSentRev = rev;
+      setSync('synced');
+    } catch (e) { if (isDenied(e)) flagBlocked(); else setSync('offline'); }
+  };
+
+  const hasLocalData = () => {
+    try {
+      const d = window.loadDB();
+      const anyRec = ['payments', 'formality', 'default', 'reminder', 'archive']
+        .some(sec => (d[sec] || []).length > 0);
+      if (anyRec) return true;
+      if (window.loadTomb) return Object.keys(window.loadTomb()).length > 0;
+    } catch (e) {}
+    return false;
+  };
+
   async function pullAndMerge() {
     setSync('syncing');
     let snap = null;
     try { snap = await get(dbRef); } catch (e) { if (isDenied(e)) flagBlocked(); else setSync('offline'); return; }
     const val = snap && snap.val ? snap.val() : null;
-    if (!val || !val.sections) {
-      let hasLocal = false;
-      try {
-        const d = window.loadDB();
-        hasLocal = ['payments', 'formality', 'default', 'reminder', 'archive']
-          .some(sec => (d[sec] || []).length > 0);
-        if (!hasLocal && window.loadTomb) hasLocal = Object.keys(window.loadTomb()).length > 0;
-      } catch (e) {}
-      if (hasLocal) pushNow();
+    if (!val) {
+      if (hasLocalData()) pushNow();
       else setSync('synced');
       return;
     }
+    if (val.erasedAt && !val.sections) {
+      if (val.rev && val.rev === lastSentRev) { setSync('synced'); return; }
+      adoptErase(val);
+      return;
+    }
+    if (!val.sections) return;
     if (val.rev && val.rev === lastSentRev) { setSync('synced'); return; }
+    // Boot/resync: union-merge heals every divergence and preserves
+    // unsynced local work; the merged result is pushed back to the cloud.
     let changed = false;
     try { changed = window.mergeCloudData(val); } catch (e) { changed = false; }
     if (changed) {
@@ -2652,11 +2734,18 @@ window.__setSyncState = function (s) {
     onValue(dbRef, (snap) => {
       let val = null;
       try { val = snap && snap.val ? snap.val() : null; } catch (e) {}
-      if (!val || !val.sections) return;
+      if (!val) {
+        if (hasLocalData()) pushNow();
+        return;
+      }
+      if (val.erasedAt && !val.sections) {
+        if (val.rev && val.rev === lastSentRev) return;
+        adoptErase(val);
+        return;
+      }
+      if (!val.sections) return;
       if (val.rev && val.rev === lastSentRev) return;
-      let changed = false;
-      try { changed = window.mergeCloudData(val); } catch (e) {}
-      if (changed) { try { window.refreshUI(); } catch (e) {} }
+      adoptState(val);
     }, (err) => { if (isDenied(err)) flagBlocked(); else setSync('offline'); });
   } catch (e) {}
 
